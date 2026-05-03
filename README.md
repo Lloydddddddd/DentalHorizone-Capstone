@@ -67,15 +67,15 @@ php artisan key:generate
 Open `.env` and set your database credentials:
 
 ```env
-APP_NAME="Dental Horizon"
-APP_URL=http://localhost:8000
+APP_NAME="Dental Horizone"
+APP_URL=http://localhost
 
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
-DB_DATABASE=dental_horizon
+DB_DATABASE=dentalhorizonedb
 DB_USERNAME=root
-DB_PASSWORD=your_password
+DB_PASSWORD=
 ```
 
 > **Using SQLite (quickest local setup):**
