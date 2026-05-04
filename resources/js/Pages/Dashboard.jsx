@@ -1,7 +1,8 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
+import PrimaryButton from '@/Components/PrimaryButton'; // ✅ import button
 
-export default function Dashboard() {
+export default function Dashboard({ auth }) {
     return (
         <AuthenticatedLayout
             header={
@@ -18,6 +19,17 @@ export default function Dashboard() {
                         <div className="p-6 text-gray-900">
                             You're logged in!
                         </div>
+
+                        {/* ✅ Admin-only Register button */}
+                        {auth.user.is_admin && (
+                            <div className="mt-4">
+                                <Link href={route('register')}>
+                                    <PrimaryButton>
+                                        Create New Account
+                                    </PrimaryButton>
+                                </Link>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
