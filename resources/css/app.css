@@ -1,3 +1,52 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    :root {
+        /* Design Tokens */
+        --color-background:       #f8fafc;
+        --color-surface:          #ffffff;
+        --color-border:           #cbd5e1;
+        --color-foreground:       #0f172a;
+        --color-muted:            #64748b;
+        --color-primary:          #1e3a8a;
+        --color-primary-fg:       #ffffff;
+        --color-secondary:        #eff6ff;
+        --color-secondary-fg:     #1e40af;
+        --color-success:          #10b981;
+        --color-warning:          #f59e0b;
+        --color-danger:           #ef4444;
+    }
+
+    html, body {
+        @apply h-full m-0 p-0;
+        font-family: 'DM Sans', sans-serif;
+        background-color: var(--color-background);
+        color: var(--color-foreground);
+    }
+
+    #app {
+        @apply h-full;
+    }
+}
+
+@layer utilities {
+    .font-headings  { font-family: 'DM Sans', sans-serif; font-weight: 700; }
+    .font-sans      { font-family: 'DM Sans', sans-serif; }
+    .bg-background  { background-color: var(--color-background); }
+    .bg-surface     { background-color: var(--color-surface); }
+    .bg-secondary   { background-color: var(--color-secondary); }
+    .bg-primary     { background-color: var(--color-primary); }
+    .bg-border      { background-color: var(--color-border); }
+    .border-border  { border-color: var(--color-border); }
+    .text-foreground       { color: var(--color-foreground); }
+    .text-muted            { color: var(--color-muted); }
+    .text-primary          { color: var(--color-primary); }
+    .text-secondary-fg     { color: var(--color-secondary-fg); }
+    .text-success          { color: var(--color-success); }
+    .text-white            { color: #ffffff; }
+    .bg-success\/10        { background-color: color-mix(in srgb, var(--color-success) 10%, transparent); }
+}
