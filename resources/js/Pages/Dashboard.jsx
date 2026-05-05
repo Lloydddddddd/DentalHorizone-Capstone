@@ -5,8 +5,11 @@ import StatsCard from '../components/StatsCard';
 import ScheduleTable from '../components/ScheduleTable';
 import QuickActions from '../components/QuickActions';
 import RecentPayments from '../components/RecentPayments';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { Head, Link } from '@inertiajs/react';
+import PrimaryButton from '@/Components/PrimaryButton'; // ✅ import button
 
-export default function Dashboard() {
+export default function Dashboard({ auth }) {
     return (
         <div className="flex h-screen w-full bg-background text-foreground font-sans overflow-hidden">
             <Sidebar />
@@ -54,6 +57,17 @@ export default function Dashboard() {
                             <QuickActions />
                             <RecentPayments />
                         </div>
+
+                        {/* ✅ Admin-only Register button */}
+                        {auth.user.is_admin && (
+                            <div className="mt-4">
+                                <Link href={route('register')}>
+                                    <PrimaryButton>
+                                        Create New Account
+                                    </PrimaryButton>
+                                </Link>
+                            </div>
+                        )}
                     </div>
                 </main>
             </div>

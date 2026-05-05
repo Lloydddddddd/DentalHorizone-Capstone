@@ -12,6 +12,7 @@ export default function Register() {
         username: '',
         password: '',
         password_confirmation: '',
+        is_admin: '',
     });
 
     const submit = (e) => {
@@ -120,6 +121,25 @@ export default function Register() {
                 </div>
 
                 <div className="mt-4 flex items-center justify-end">
+                    <div className="mt-4">
+                        <InputLabel htmlFor="is_admin" value="Account Type" />
+
+                        <select
+                            id="is_admin"
+                            name="is_admin"
+                            value={data.is_admin}
+                            onChange={(e) => setData('is_admin', e.target.value)}
+                            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm"
+                            required
+                        >
+                            <option value="">Select type</option>
+                            <option value="0">Regular User</option>
+                            <option value="1">Admin</option>
+                        </select>
+
+                        <InputError message={errors.is_admin} className="mt-2" />
+                    </div>
+
                     <Link
                         href={route('login')}
                         className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
