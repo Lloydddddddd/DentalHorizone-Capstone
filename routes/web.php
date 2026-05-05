@@ -48,7 +48,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/appointments', fn () => inertia('Appointments/Index'))->name('appointments.index');
     Route::get('/payments',     fn () => inertia('Payments/Index'))->name('payments.index');
     Route::get('/reports',      fn () => inertia('Reports/Index'))->name('reports.index');
-    Route::get('/settings',     fn () => inertia('Settings/Index'))->name('settings.index');
 });
 
 // Auth routes provided by Breeze / Fortify
