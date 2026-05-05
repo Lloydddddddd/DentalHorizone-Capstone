@@ -53,17 +53,6 @@ export default function Sidebar() {
                     );
                 })}
             </nav>
-
-            {/* Settings */}
-            <div className="p-4">
-                <Link
-                    href="/settings"
-                    className="flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium text-muted hover:bg-secondary hover:text-foreground transition-colors"
-                >
-                    <Settings size={18} />
-                    Settings
-                </Link>
-            </div>
         </aside>
     );
 }
