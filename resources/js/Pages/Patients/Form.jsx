@@ -6,7 +6,7 @@ import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
 import PrimaryButton from '@/Components/PrimaryButton';
 
-export default function Form({ patient }) {
+export default function Form({ patient, onSuccess = null }) {
     const isNew = !patient || !patient.id;
     const { data, setData, post, put, processing, errors } = useForm({
         patient_name: patient?.patient_name || '',
@@ -20,14 +20,18 @@ export default function Form({ patient }) {
 
     function submit(e) {
         e.preventDefault();
+        const successHandler = (page) => {
+            if (onSuccess && typeof onSuccess === 'function') {
+                onSuccess(page);
+            } else {
+                router.visit(route('patients.index'));
+            }
+        };
+
         if (isNew) {
-            post(route('patients.store'), {
-                onSuccess: () => router.visit(route('patients.index')),
-            });
+            post(route('patients.store'), { onSuccess: successHandler });
         } else {
-            put(route('patients.update', patient.id), {
-                onSuccess: () => router.visit(route('patients.index')),
-            });
+            put(route('patients.update', patient.id), { onSuccess: successHandler });
         }
     }
 

@@ -2,11 +2,16 @@ import React from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, usePage } from '@inertiajs/react';
 import PrimaryButton from '@/Components/PrimaryButton';
+import Modal from '@/Components/Modal';
+import InlineForm from './InlineForm';
+import { router } from '@inertiajs/react';
+import { useState } from 'react';
 
 export default function Index({ patients }) {
     const { props } = usePage();
     const patientsData = patients && patients.data ? patients.data : [];
     const csrfToken = props?.csrfToken || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    const [showModal, setShowModal] = useState(false);
 
     return (
         <AuthenticatedLayout header={<h2 className="text-xl font-semibold">Patients</h2>}>
@@ -18,9 +23,9 @@ export default function Index({ patients }) {
                 )}
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-medium">Patients</h3>
-                    <Link href={route('patients.create')}>
-                        <PrimaryButton>Add Patient</PrimaryButton>
-                    </Link>
+                    <div>
+                        <PrimaryButton onClick={() => setShowModal(true)}>Add Patient</PrimaryButton>
+                    </div>
                 </div>
 
                 <div className="bg-white shadow-sm rounded-md overflow-hidden">
@@ -65,7 +70,12 @@ export default function Index({ patients }) {
                     </table>
                 </div>
 
-                {/* debug info removed */}
+                <Modal show={showModal} onClose={() => setShowModal(false)} maxWidth="lg">
+                    <div className="p-6">
+                        <h3 className="text-lg font-medium mb-4">Add Patient</h3>
+                        <InlineForm patient={{}} onSuccess={() => { setShowModal(false); router.reload(); }} />
+                    </div>
+                </Modal>
 
                 <div className="mt-4 text-sm text-gray-600">
                     {patients?.meta ? `Page ${patients.meta.current_page} of ${patients.meta.last_page}` : ''}
