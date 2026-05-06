@@ -12,6 +12,9 @@ export default function Index({ patients }) {
     const patientsData = patients && patients.data ? patients.data : [];
     const csrfToken = props?.csrfToken || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     const [showModal, setShowModal] = useState(false);
+    const [editingPatient, setEditingPatient] = useState(null);
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deletingPatient, setDeletingPatient] = useState(null);
 
     return (
         <AuthenticatedLayout header={<h2 className="text-xl font-semibold">Patients</h2>}>
@@ -24,7 +27,7 @@ export default function Index({ patients }) {
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-medium">Patients</h3>
                     <div>
-                        <PrimaryButton onClick={() => setShowModal(true)}>Add Patient</PrimaryButton>
+                        <PrimaryButton onClick={() => { setEditingPatient(null); setShowModal(true); }}>Add Patient</PrimaryButton>
                     </div>
                 </div>
 
@@ -57,12 +60,8 @@ export default function Index({ patients }) {
                                     <td className="px-4 py-3 text-sm">{p.patient_status}</td>
                                     <td className="px-4 py-3 text-sm text-right">
                                         <Link href={route('patients.show', p.id)} className="text-indigo-600 hover:underline mr-3">View</Link>
-                                        <Link href={route('patients.edit', p.id)} className="text-blue-600 hover:underline mr-3">Edit</Link>
-                                        <form method="POST" action={route('patients.destroy', p.id)} style={{ display: 'inline' }}>
-                                            <input type="hidden" name="_method" value="DELETE" />
-                                            <input type="hidden" name="_token" value={csrfToken} />
-                                            <button className="text-red-600 hover:underline" onClick={(e) => { if(!confirm('Delete patient?')) e.preventDefault(); }}>Delete</button>
-                                        </form>
+                                        <button onClick={() => { setEditingPatient(p); setShowModal(true); }} className="text-blue-600 hover:underline mr-3">Edit</button>
+                                        <button onClick={() => { setDeletingPatient(p); setShowDeleteModal(true); }} className="text-red-600 hover:underline">Delete</button>
                                     </td>
                                 </tr>
                             ))}
@@ -72,8 +71,28 @@ export default function Index({ patients }) {
 
                 <Modal show={showModal} onClose={() => setShowModal(false)} maxWidth="lg">
                     <div className="p-6">
-                        <h3 className="text-lg font-medium mb-4">Add Patient</h3>
-                        <InlineForm patient={{}} onSuccess={() => { setShowModal(false); router.reload(); }} />
+                        <h3 className="text-lg font-medium mb-4">{editingPatient ? 'Edit Patient' : 'Add Patient'}</h3>
+                        <InlineForm patient={editingPatient || {}} onSuccess={() => { setShowModal(false); router.reload(); }} />
+                    </div>
+                </Modal>
+
+                <Modal show={showDeleteModal} onClose={() => setShowDeleteModal(false)} maxWidth="md">
+                    <div className="p-6">
+                        <h3 className="text-lg font-medium mb-4">Confirm delete</h3>
+                        <p>Are you sure you want to delete <strong>{deletingPatient?.patient_name}</strong>?</p>
+                        <div className="mt-4 flex gap-3">
+                            <button onClick={() => setShowDeleteModal(false)} className="px-4 py-2 border rounded">Cancel</button>
+                            <button onClick={() => {
+                                if (!deletingPatient) return;
+                                router.delete(route('patients.destroy', deletingPatient.id), {
+                                    onSuccess: () => {
+                                        setShowDeleteModal(false);
+                                        setDeletingPatient(null);
+                                        router.reload();
+                                    }
+                                });
+                            }} className="px-4 py-2 bg-red-600 text-white rounded">Delete</button>
+                        </div>
                     </div>
                 </Modal>
 
