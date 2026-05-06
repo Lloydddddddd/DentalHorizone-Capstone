@@ -12,6 +12,7 @@ class Patient extends Model
         'telephone',
         'age',
         'occupation',
+        'email',
         'complaint',
         'date_of_visit',
         'next_appointment',
