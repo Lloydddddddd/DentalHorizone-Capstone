@@ -27,6 +27,7 @@ export default function AddAppointmentPopup({ patient = null, onClose = () => {}
         visit_status: 'pending',
         debit: 0,
         credit: 0,
+        balance: 0,
     });
 
     const firstInput = useRef(null);
@@ -36,6 +37,18 @@ export default function AddAppointmentPopup({ patient = null, onClose = () => {}
         // focus first input when opened
         setTimeout(() => firstInput.current?.focus(), 60);
     }, [patient]);
+
+    const handleDebitChange = (e) => {
+    const value = parseFloat(e.target.value) || 0;
+    setData('debit', value);
+    setData('balance', value - (parseFloat(data.credit) || 0));
+    };
+
+    const handleCreditChange = (e) => {
+    const value = parseFloat(e.target.value) || 0;
+    setData('credit', value);
+    setData('balance', (parseFloat(data.debit) || 0) - value);
+    };
 
     function handleSubmit(e) {
         e.preventDefault();
@@ -92,14 +105,45 @@ export default function AddAppointmentPopup({ patient = null, onClose = () => {}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <InputLabel>Debit</InputLabel>
-                            <TextInput type="number" value={data.debit} onChange={e => setData('debit', e.target.value)} className="mt-1 w-full" />
+                            <TextInput
+                                type="number"
+                                value={data.debit}
+                                onChange={(e) => {
+                                    const value = parseFloat(e.target.value) || 0;
+                                    setData('debit', value);
+                                    setData('balance', value - (parseFloat(data.credit) || 0));
+                                }}
+                                className="mt-1 w-full"
+                            />
                             <InputError message={errors.debit} />
                         </div>
                         <div>
                             <InputLabel>Credit</InputLabel>
-                            <TextInput type="number" value={data.credit} onChange={e => setData('credit', e.target.value)} className="mt-1 w-full" />
+                            <TextInput
+                                type="number"
+                                value={data.credit}
+                                onChange={(e) => {
+                                    const value = parseFloat(e.target.value) || 0;
+                                    setData('credit', value);
+                                    setData('balance', (parseFloat(data.debit) || 0) - value);
+                                }}
+                                className="mt-1 w-full"
+                            />
                             <InputError message={errors.credit} />
                         </div>
+                    </div>
+
+                    <div>
+                        <InputLabel>Balance</InputLabel>
+                        <TextInput
+                            type="number"
+                            value={data.balance}
+                            readOnly
+                            className={`mt-1 w-full bg-gray-100 ${
+                                data.balance < 0 ? 'text-red-600' : 'text-green-600'
+                            }`}
+                        />
+                        <InputError message={errors.balance} />
                     </div>
 
                     <div className="flex justify-end gap-2">
