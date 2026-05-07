@@ -92,7 +92,7 @@ export default function Index({ appointments, filters }) {
                                         ? dayjs(appointment.next_appointment).format('MMM D, YYYY h:mm A')
                                         : '-'}
                                 </td>
-                                <td className="px-4 py-2 border">{appointment.patient?.name}</td>
+                                <td className="px-4 py-2 border">{appointment.patient?.patient_name}</td>
                                 <td className="px-4 py-2 border">{appointment.complaint}</td>
                                 <td className="px-4 py-2 border">{appointment.service}</td>
                                 <td className="px-4 py-2 border">{appointment.visit_status}</td>
