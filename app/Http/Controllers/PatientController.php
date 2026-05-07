@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\Patient;
+use App\Models\ArchivedPatient;
 use Illuminate\Support\Facades\Redirect;
+use Illuminate\Support\Facades\DB;
 
 class PatientController extends Controller
 {
@@ -122,5 +124,81 @@ class PatientController extends Controller
         $patient = Patient::findOrFail($id);
         $patient->delete();
         return Redirect::route('patients.index')->with('success', 'Patient deleted.');
+    }
+
+    /**
+     * Archive the specified patient (copy to archived_patients and delete original).
+     */
+    public function archive(string $id)
+    {
+        $patient = Patient::findOrFail($id);
+
+        // Copy patient data into archived_patients table
+        DB::table('archived_patients')->insert([
+            'patient_name' => $patient->patient_name,
+            'address' => $patient->address,
+            'telephone' => $patient->telephone,
+            'age' => $patient->age,
+            'occupation' => $patient->occupation,
+            'complaint' => $patient->complaint,
+            'date_of_visit' => $patient->date_of_visit,
+            'next_appointment' => $patient->next_appointment,
+            'service' => $patient->service,
+            'patient_status' => $patient->patient_status,
+            'visit_status' => $patient->visit_status,
+            'status' => $patient->status,
+            'debit' => $patient->debit,
+            'credit' => $patient->credit,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Remove original patient
+        $patient->delete();
+
+        return Redirect::route('patients.index')->with('success', 'Patient archived.');
+    }
+
+    /**
+     * Display a listing of archived patients.
+     */
+    public function archivedIndex()
+    {
+        $archived = ArchivedPatient::orderBy('patient_name')->paginate(20);
+        return Inertia::render('ArchivedPatients/Index', [
+            'archivedPatients' => $archived,
+        ]);
+    }
+
+    /**
+     * Restore an archived patient back into patients table.
+     */
+    public function restore(string $id)
+    {
+        $arch = ArchivedPatient::findOrFail($id);
+
+        $data = [
+            'patient_name' => $arch->patient_name,
+            'address' => $arch->address,
+            'telephone' => $arch->telephone,
+            'age' => $arch->age,
+            'occupation' => $arch->occupation,
+            'complaint' => $arch->complaint,
+            'date_of_visit' => $arch->date_of_visit ?? now(),
+            'next_appointment' => $arch->next_appointment,
+            'service' => $arch->service,
+            'patient_status' => $arch->patient_status ?? 'Active',
+            'visit_status' => $arch->visit_status ?? 'none',
+            'status' => $arch->status ?? 'active',
+            'debit' => $arch->debit ?? 0,
+            'credit' => $arch->credit ?? 0,
+            'email' => $arch->email ?? null,
+        ];
+
+        Patient::create($data);
+
+        $arch->delete();
+
+        return Redirect::route('archived-patients.index')->with('success', 'Patient restored.');
     }
 }
