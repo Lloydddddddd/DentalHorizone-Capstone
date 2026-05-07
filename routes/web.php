@@ -28,6 +28,8 @@ Route::middleware('auth')->group(function () {
     Route::get('archived-patients', [PatientController::class, 'archivedIndex'])->name('archived-patients.index');
     Route::post('archived-patients/{archived}/restore', [PatientController::class, 'restore'])->name('archived-patients.restore');
     Route::resource('visit-histories', PatientVisitHistoryController::class);
+    // Appointments
+    Route::resource('appointments', AppointmentController::class);
 });
 
 require __DIR__.'/auth.php';

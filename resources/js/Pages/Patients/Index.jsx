@@ -4,6 +4,7 @@ import { Head, Link, usePage, router } from '@inertiajs/react';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Modal from '@/Components/Modal';
 import InlineForm from '@/Pages/Patients/InlineForm';
+import InlineAppointmentForm from '@/Pages/Patients/InlineAppointmentForm';
 
 export default function Index({ patients }) {
     const { props } = usePage();
@@ -14,6 +15,8 @@ export default function Index({ patients }) {
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingPatient, setEditingPatient] = useState(null);
+    const [showApptModal, setShowApptModal] = useState(false);
+    const [apptPatient, setApptPatient] = useState(null);
 
     return (
         <AuthenticatedLayout header={<h2 className="text-xl font-semibold">Patients</h2>}>
@@ -67,7 +70,7 @@ export default function Index({ patients }) {
                                         )}
                                     </td>
                                     <td className="px-4 py-3 text-sm text-right">
-                                        <button className="text-indigo-600 hover:underline mr-3">Add Appointment</button>
+                                        <button className="text-indigo-600 hover:underline mr-3" onClick={() => { setApptPatient(p); setShowApptModal(true); }}>Add Appointment</button>
                                         <button className="text-blue-600 hover:underline mr-3" onClick={() => { setEditingPatient(p); setShowEditModal(true); }}>Edit</button>
                                         <button
                                             className="text-red-600 hover:underline"
@@ -113,6 +116,15 @@ export default function Index({ patients }) {
                         <h3 className="text-lg font-medium">Edit Patient</h3>
                         <div className="mt-4">
                             <InlineForm patient={editingPatient} onSuccess={() => { setShowEditModal(false); router.reload(); }} />
+                        </div>
+                    </div>
+                </Modal>
+
+                <Modal show={showApptModal} onClose={() => setShowApptModal(false)}>
+                    <div className="p-6">
+                        <h3 className="text-lg font-medium">Add Appointment for {apptPatient?.patient_name}</h3>
+                        <div className="mt-4">
+                            <InlineAppointmentForm patientId={apptPatient?.id} onSuccess={() => { setShowApptModal(false); router.reload(); }} />
                         </div>
                     </div>
                 </Modal>
