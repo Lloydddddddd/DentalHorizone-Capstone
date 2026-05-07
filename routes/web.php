@@ -7,7 +7,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\ArchivedPatientController;
 use App\Http\Controllers\PatientVisitHistoryController;
-use App\Http\Controllers\PatientCrudController;
+use App\Http\Controllers\AppointmentController;
 
 Route::get('/', function () {
     return Inertia::render('Auth/Login');
@@ -47,8 +47,9 @@ Route::get('/', fn () => redirect()->route('dashboard'));
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    // Stub routes — keep only placeholders that don't conflict with controllers
-    Route::get('/appointments', fn () => inertia('Appointments/Index'))->name('appointments.index');
+    // Stub routes — flesh these out as you build each module
+    Route::get('/patients',     fn () => inertia('Patients/Index'))->name('patients.index');
+    Route::resource('appointments', AppointmentController::class);
     Route::get('/payments',     fn () => inertia('Payments/Index'))->name('payments.index');
     Route::get('/reports',      fn () => inertia('Reports/Index'))->name('reports.index');
 });
