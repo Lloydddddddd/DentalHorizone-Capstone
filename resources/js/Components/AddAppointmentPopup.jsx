@@ -38,6 +38,18 @@ export default function AddAppointmentPopup({ patient = null, onClose = () => {}
         setTimeout(() => firstInput.current?.focus(), 60);
     }, [patient]);
 
+    const services = {
+    "Consultation": 500,
+    "Cleaning / Prophylaxis": 1000,
+    "Tooth Extraction": 1000,
+    "Tooth Filling": 1000,
+    "Veneers": 5000,
+    "Jacket Crown": 5000,
+    "Retainer": 3000,
+    "Plastic Denture": 1000,
+    "Full Denture": 1500,
+    };
+
     const handleDebitChange = (e) => {
     const value = parseFloat(e.target.value) || 0;
     setData('debit', value);
@@ -74,7 +86,25 @@ export default function AddAppointmentPopup({ patient = null, onClose = () => {}
 
                     <div>
                         <InputLabel>Service</InputLabel>
-                        <TextInput value={data.service} onChange={e => setData('service', e.target.value)} className="mt-1 w-full" required />
+                        <select
+                            value={data.service}
+                            onChange={(e) => {
+                                const selectedService = e.target.value;
+                                const price = services[selectedService] || 0;
+                                setData('service', selectedService);
+                                setData('debit', price);
+                                setData('balance', price - (parseFloat(data.credit) || 0));
+                            }}
+                            className="mt-1 w-full border rounded p-2"
+                            required
+                        >
+                            <option value="">Select a service</option>
+                            {Object.keys(services).map((service) => (
+                                <option key={service} value={service}>
+                                    {service}
+                                </option>
+                            ))}
+                        </select>
                         <InputError message={errors.service} />
                     </div>
 
