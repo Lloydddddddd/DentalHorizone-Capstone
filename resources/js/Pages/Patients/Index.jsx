@@ -1,12 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, usePage } from '@inertiajs/react';
 import PrimaryButton from '@/Components/PrimaryButton';
+import Modal from '@/Components/Modal';
 
 export default function Index({ patients }) {
     const { props } = usePage();
     const patientsData = patients && patients.data ? patients.data : [];
     const csrfToken = props?.csrfToken || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    const [showArchiveModal, setShowArchiveModal] = useState(false);
+    const [selectedPatient, setSelectedPatient] = useState(null);
 
     return (
         <AuthenticatedLayout header={<h2 className="text-xl font-semibold">Patients</h2>}>
@@ -43,21 +46,28 @@ export default function Index({ patients }) {
                                 </tr>
                             )}
                             {patientsData.map((p) => (
-                                <tr key={p.id}>
+                                <tr key={p.id} className="hover:bg-gray-50">
                                     <td className="px-4 py-3 text-sm">{p.patient_name}</td>
                                     <td className="px-4 py-3 text-sm">{p.age}</td>
                                     <td className="px-4 py-3 text-sm">{p.occupation}</td>
                                     <td className="px-4 py-3 text-sm">{p.telephone}</td>
                                     <td className="px-4 py-3 text-sm">{p.email}</td>
-                                    <td className="px-4 py-3 text-sm">{p.patient_status}</td>
+                                    <td className="px-4 py-3 text-sm">
+                                        {p.patient_status === 'Active' ? (
+                                            <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">Active</span>
+                                        ) : (
+                                            <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-800">Inactive</span>
+                                        )}
+                                    </td>
                                     <td className="px-4 py-3 text-sm text-right">
-                                        <Link href={route('patients.show', p.id)} className="text-indigo-600 hover:underline mr-3">View</Link>
+                                        <button className="text-indigo-600 hover:underline mr-3">Add Appointment</button>
                                         <Link href={route('patients.edit', p.id)} className="text-blue-600 hover:underline mr-3">Edit</Link>
-                                        <form method="POST" action={route('patients.destroy', p.id)} style={{ display: 'inline' }}>
-                                            <input type="hidden" name="_method" value="DELETE" />
-                                            <input type="hidden" name="_token" value={csrfToken} />
-                                            <button className="text-red-600 hover:underline" onClick={(e) => { if(!confirm('Delete patient?')) e.preventDefault(); }}>Delete</button>
-                                        </form>
+                                        <button
+                                            className="text-red-600 hover:underline"
+                                            onClick={() => { setSelectedPatient(p); setShowArchiveModal(true); }}
+                                        >
+                                            Archive
+                                        </button>
                                     </td>
                                 </tr>
                             ))}
@@ -66,6 +76,21 @@ export default function Index({ patients }) {
                 </div>
 
                 {/* debug info removed */}
+
+                <Modal show={showArchiveModal} onClose={() => setShowArchiveModal(false)}>
+                    <div className="p-6">
+                        <h3 className="text-lg font-medium">Archive patient</h3>
+                        <p className="mt-2 text-sm text-gray-600">Are you sure you want to archive <strong>{selectedPatient?.patient_name}</strong>? This will move the patient to Archived Patients.</p>
+
+                        <div className="mt-4 flex justify-end space-x-3">
+                            <button onClick={() => setShowArchiveModal(false)} className="rounded-md border px-4 py-2">Cancel</button>
+                            <form method="POST" action={selectedPatient ? route('patients.archive', selectedPatient.id) : '#'}>
+                                <input type="hidden" name="_token" value={csrfToken} />
+                                <button className="rounded-md bg-red-600 px-4 py-2 text-white">Archive</button>
+                            </form>
+                        </div>
+                    </div>
+                </Modal>
 
                 <div className="mt-4 text-sm text-gray-600">
                     {patients?.meta ? `Page ${patients.meta.current_page} of ${patients.meta.last_page}` : ''}
