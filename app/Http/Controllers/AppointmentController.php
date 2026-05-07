@@ -18,7 +18,7 @@ class AppointmentController extends Controller
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->whereHas('patient', function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%");
+                $q->where('patient_name', 'like', "%{$search}%");
             });
         }
 
@@ -60,8 +60,15 @@ class AppointmentController extends Controller
             'date_of_visit' => 'required|date',
             'next_appointment' => 'nullable|date',
             'visit_status' => 'required|string|max:50',
-            'debit' => 'nullable|numeric',
-            'credit' => 'nullable|numeric',
+            'debit' => 'nullable|numeric|min:0',
+            'credit' => 'nullable|numeric|min:0',
+            'balance' => 'nullable|numeric',
+        ], [
+            'debit.numeric' => 'Debit must be a number.',
+            'credit.numeric' => 'Credit must be a number.',
+            'debit.min' => 'Debit cannot be negative.',
+            'credit.min' => 'Credit cannot be negative.',
+            'balance.numeric' => 'Balance must be a valid number.',
         ]);
 
         $validated['balance'] = ($validated['debit'] ?? 0) - ($validated['credit'] ?? 0);
