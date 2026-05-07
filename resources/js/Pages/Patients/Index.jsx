@@ -4,7 +4,7 @@ import { Head, Link, usePage, router } from '@inertiajs/react';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Modal from '@/Components/Modal';
 import InlineForm from '@/Pages/Patients/InlineForm';
-import InlineAppointmentForm from '@/Pages/Patients/InlineAppointmentForm';
+import AddAppointmentPopup from '@/Components/AddAppointmentPopup';
 
 export default function Index({ patients }) {
     const { props } = usePage();
@@ -111,23 +111,13 @@ export default function Index({ patients }) {
                     </div>
                 </Modal>
 
-                <Modal show={showEditModal} onClose={() => setShowEditModal(false)}>
-                    <div className="p-6">
-                        <h3 className="text-lg font-medium">Edit Patient</h3>
-                        <div className="mt-4">
-                            <InlineForm patient={editingPatient} onSuccess={() => { setShowEditModal(false); router.reload(); }} />
-                        </div>
-                    </div>
-                </Modal>
-
-                <Modal show={showApptModal} onClose={() => setShowApptModal(false)}>
-                    <div className="p-6">
-                        <h3 className="text-lg font-medium">Add Appointment for {apptPatient?.patient_name}</h3>
-                        <div className="mt-4">
-                            <InlineAppointmentForm patientId={apptPatient?.id} onSuccess={() => { setShowApptModal(false); router.reload(); }} />
-                        </div>
-                    </div>
-                </Modal>
+                {showApptModal && (
+                    <AddAppointmentPopup
+                        patient={apptPatient}
+                        onClose={() => setShowApptModal(false)}
+                        onSaved={() => router.reload()}
+                    />
+                )}
 
                 <div className="mt-4 text-sm text-gray-600">
                     {patients?.meta ? `Page ${patients.meta.current_page} of ${patients.meta.last_page}` : ''}
