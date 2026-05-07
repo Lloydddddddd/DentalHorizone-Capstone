@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage, router } from '@inertiajs/react';
 import PrimaryButton from '@/Components/PrimaryButton';
 import Modal from '@/Components/Modal';
+import InlineForm from '@/Pages/Patients/InlineForm';
 
 export default function Index({ patients }) {
     const { props } = usePage();
@@ -10,6 +11,9 @@ export default function Index({ patients }) {
     const csrfToken = props?.csrfToken || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
     const [showArchiveModal, setShowArchiveModal] = useState(false);
     const [selectedPatient, setSelectedPatient] = useState(null);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editingPatient, setEditingPatient] = useState(null);
 
     return (
         <AuthenticatedLayout header={<h2 className="text-xl font-semibold">Patients</h2>}>
@@ -21,9 +25,12 @@ export default function Index({ patients }) {
                 )}
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-medium">Patients</h3>
-                    <div>
-                        <PrimaryButton onClick={() => { setEditingPatient(null); setShowModal(true); }}>Add Patient</PrimaryButton>
-                    </div>
+                    <button
+                        onClick={() => setShowAddModal(true)}
+                        className={`inline-flex items-center rounded-md border border-transparent bg-gray-800 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition duration-150 ease-in-out hover:bg-gray-700 focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 active:bg-gray-900`}
+                    >
+                        Add Patient
+                    </button>
                 </div>
 
                 <div className="bg-white shadow-sm rounded-md overflow-hidden">
@@ -61,7 +68,7 @@ export default function Index({ patients }) {
                                     </td>
                                     <td className="px-4 py-3 text-sm text-right">
                                         <button className="text-indigo-600 hover:underline mr-3">Add Appointment</button>
-                                        <Link href={route('patients.edit', p.id)} className="text-blue-600 hover:underline mr-3">Edit</Link>
+                                        <button className="text-blue-600 hover:underline mr-3" onClick={() => { setEditingPatient(p); setShowEditModal(true); }}>Edit</button>
                                         <button
                                             className="text-red-600 hover:underline"
                                             onClick={() => { setSelectedPatient(p); setShowArchiveModal(true); }}
@@ -88,6 +95,24 @@ export default function Index({ patients }) {
                                 <input type="hidden" name="_token" value={csrfToken} />
                                 <button className="rounded-md bg-red-600 px-4 py-2 text-white">Archive</button>
                             </form>
+                        </div>
+                    </div>
+                </Modal>
+
+                <Modal show={showAddModal} onClose={() => setShowAddModal(false)}>
+                    <div className="p-6">
+                        <h3 className="text-lg font-medium">Add Patient</h3>
+                        <div className="mt-4">
+                            <InlineForm onSuccess={() => { setShowAddModal(false); router.reload(); }} />
+                        </div>
+                    </div>
+                </Modal>
+
+                <Modal show={showEditModal} onClose={() => setShowEditModal(false)}>
+                    <div className="p-6">
+                        <h3 className="text-lg font-medium">Edit Patient</h3>
+                        <div className="mt-4">
+                            <InlineForm patient={editingPatient} onSuccess={() => { setShowEditModal(false); router.reload(); }} />
                         </div>
                     </div>
                 </Modal>

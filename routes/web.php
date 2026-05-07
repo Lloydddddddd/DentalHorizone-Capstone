@@ -31,28 +31,5 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
-
-
-
-use App\Http\Controllers\DashboardController;
-
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-*/
-
-Route::get('/', fn () => redirect()->route('dashboard'));
-
-Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-    // Stub routes — flesh these out as you build each module
-    Route::get('/patients',     fn () => inertia('Patients/Index'))->name('patients.index');
-    Route::resource('appointments', AppointmentController::class);
-    Route::get('/payments',     fn () => inertia('Payments/Index'))->name('payments.index');
-    Route::get('/reports',      fn () => inertia('Reports/Index'))->name('reports.index');
-});
-
-// Auth routes provided by Breeze / Fortify
-require __DIR__.'/auth.php';
+// Additional application routes are defined above. Avoid duplicate route stubs
+// that can shadow controller resource routes (kept intentionally minimal).
