@@ -8,6 +8,7 @@ use App\Http\Controllers\PatientController;
 use App\Http\Controllers\ArchivedPatientController;
 use App\Http\Controllers\PatientVisitHistoryController;
 use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\ServiceController;
 
 Route::get('/', function () {
     return Inertia::render('Auth/Login');
@@ -16,6 +17,14 @@ Route::get('/', function () {
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/dental-services', [ServiceController::class, 'index'])->name('services.index');
+    Route::post('/services', [ServiceController::class, 'store'])->name('services.store');
+    Route::put('/services/{service}', [ServiceController::class, 'update'])->name('services.update');
+    Route::delete('/services/{service}', [ServiceController::class, 'destroy'])->name('services.destroy');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
