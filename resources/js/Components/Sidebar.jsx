@@ -12,6 +12,7 @@ import {
 
 const navItems = [
     { label: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
+    { label: 'Dental Services', icon: LayoutDashboard, href: '/dental-services' },
     { label: 'Patients',    icon: Users,           href: '/patients' },
     { label: 'Appointments',icon: Calendar,        href: '/appointments' },
     { label: 'Payments',    icon: CreditCard,      href: '/payments' },
