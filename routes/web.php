@@ -8,6 +8,7 @@ use App\Http\Controllers\PatientController;
 use App\Http\Controllers\ArchivedPatientController;
 use App\Http\Controllers\PatientVisitHistoryController;
 use App\Http\Controllers\AppointmentController;
+use App\Http\Controllers\ServiceController;
 
 Route::get('/', fn () => Inertia::render('Auth/Login'));
 Route::get('/landing', fn () => Inertia::render('Landing'));
@@ -36,6 +37,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Other Resources
     Route::resource('visit-histories', PatientVisitHistoryController::class);
     Route::resource('appointments', AppointmentController::class);
+
+    // ✅ Dental Services
+    Route::resource('services', ServiceController::class);
 
     // Page Routes
     Route::get('/patients', [PatientController::class, 'index'])->name('patients.index');
