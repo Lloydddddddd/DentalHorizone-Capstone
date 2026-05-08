@@ -24,6 +24,7 @@ export default function AddAppointmentPopup({ patient = null, onClose = () => {}
         service: '',
         date_of_visit: initialDate,
         next_appointment: '',
+        no_next_appointment: false,
         visit_status: 'pending',
         debit: 0,
         credit: 0,
@@ -117,8 +118,29 @@ export default function AddAppointmentPopup({ patient = null, onClose = () => {}
 
                         <div>
                             <InputLabel>Next Appointment</InputLabel>
-                            <input type="datetime-local" value={data.next_appointment} onChange={e => setData('next_appointment', e.target.value)} className="mt-1 w-full rounded-md border-gray-300" />
+                            <input
+                                type="datetime-local"
+                                value={data.next_appointment}
+                                onChange={(e) => setData('next_appointment', e.target.value)}
+                                className="mt-1 w-full rounded-md border-gray-300"
+                                disabled={data.no_next_appointment}   //disable if checkbox checked
+                            />
                             <InputError message={errors.next_appointment} />
+
+                            <div className="mt-2 flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    checked={data.no_next_appointment}
+                                    onChange={(e) => {
+                                        const checked = e.target.checked;
+                                        setData('no_next_appointment', checked);
+                                        if (checked) {
+                                            setData('next_appointment', ''); //clear value
+                                        }
+                                    }}
+                                />
+                                <span className="text-sm text-gray-600">No next appointment</span>
+                            </div>
                         </div>
                     </div>
 

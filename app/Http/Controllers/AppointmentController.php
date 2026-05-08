@@ -59,6 +59,7 @@ class AppointmentController extends Controller
             'service' => 'required|string|max:100',
             'date_of_visit' => 'required|date',
             'next_appointment' => 'nullable|date',
+            'no_next_appointment' => 'nullable|boolean',
             'visit_status' => 'required|string|max:50',
             'debit' => 'nullable|numeric|min:0',
             'credit' => 'nullable|numeric|min:0',
@@ -70,6 +71,10 @@ class AppointmentController extends Controller
             'credit.min' => 'Credit cannot be negative.',
             'balance.numeric' => 'Balance must be a valid number.',
         ]);
+
+        if ($request->boolean('no_next_appointment')) {
+            $validated['next_appointment'] = null;
+        }
 
         $validated['balance'] = ($validated['debit'] ?? 0) - ($validated['credit'] ?? 0);
 
