@@ -7,6 +7,7 @@ use Inertia\Inertia;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\ArchivedPatientController;
 use App\Http\Controllers\PatientVisitHistoryController;
+use App\Http\Controllers\AppointmentTableController;
 
 Route::get('/', function () {
     return Inertia::render('Auth/Login');
@@ -24,26 +25,10 @@ Route::middleware('auth')->group(function () {
     Route::resource('patients', PatientController::class);
     Route::resource('archived-patients', ArchivedPatientController::class);
     Route::resource('visit-histories', PatientVisitHistoryController::class);
-});
-
-require __DIR__.'/auth.php';
-
-
-
-use App\Http\Controllers\DashboardController;
-
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-*/
-
-Route::get('/', fn () => redirect()->route('dashboard'));
-
-Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-    // Stub routes — flesh these out as you build each module
+    
+    Route::get('/appointments/upcoming', [AppointmentTableController::class, 'upcoming'])->name('appointments.upcoming');
+    Route::get('/appointments/missed', [AppointmentTableController::class, 'missed'])->name('appointments.missed');
+    
     Route::get('/patients',     fn () => inertia('Patients/Index'))->name('patients.index');
     Route::get('/appointments', fn () => inertia('Appointments/Index'))->name('appointments.index');
     Route::get('/payments',     fn () => inertia('Payments/Index'))->name('payments.index');
