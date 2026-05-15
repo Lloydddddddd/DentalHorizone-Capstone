@@ -40,13 +40,6 @@ export default function AuthenticatedLayout({ header, children }) {
                                 <NavLink href={route('services.index')} active={route().current('services.index')}>
                                      Dental Services
                                 </NavLink>
-
-                                <NavLink
-                                    href={route('archived-patients.index')}
-                                    active={route().current('archived-patients.*')}
-                                >
-                                    Archived Patients
-                                </NavLink>
                             </div>
                         </div>
 

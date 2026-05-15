@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, usePage, router } from '@inertiajs/react';
-import PrimaryButton from '@/Components/PrimaryButton';
 import Modal from '@/Components/Modal';
 import InlineForm from '@/Pages/Patients/InlineForm';
 import AddAppointmentPopup from '@/Components/AddAppointmentPopup';
@@ -23,12 +22,17 @@ export default function Index({ patients, filters = {} }) {
     const [showApptModal, setShowApptModal] = useState(false);
     const [apptPatient, setApptPatient] = useState(null);
 
+    // Debounced search
     useEffect(() => {
         const handler = setTimeout(() => {
             router.get(route('patients.index'), { 
                 q: search || undefined, 
                 status: statusFilter || undefined 
-            }, { preserveState: true, replace: true });
+            }, { 
+                preserveState: true, 
+                replace: true,
+                only: ['patients', 'flash']
+            });
         }, 500);
 
         return () => clearTimeout(handler);
@@ -41,7 +45,6 @@ export default function Index({ patients, filters = {} }) {
 
     const closeEditModal = () => {
         setShowEditModal(false);
-        // Small delay before clearing to avoid visual glitch
         setTimeout(() => setEditingPatient(null), 300);
     };
 
@@ -56,6 +59,22 @@ export default function Index({ patients, filters = {} }) {
                     </div>
                 )}
 
+                {/* Navigation Tabs */}
+                <div className="flex border-b border-gray-200 mb-6">
+                    <Link
+                        href={route('patients.index')}
+                        className="px-6 py-3 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600 -mb-px"
+                    >
+                        Active Patients
+                    </Link>
+                    <Link
+                        href={route('archived-patients.index')}
+                        className="px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 -mb-px"
+                    >
+                        Archived Patients
+                    </Link>
+                </div>
+
                 {/* Search and Add Button */}
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex-1 flex items-center space-x-3">
@@ -65,18 +84,21 @@ export default function Index({ patients, filters = {} }) {
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                                 placeholder="Search name, phone, email or occupation"
-                                className="w-full rounded-md border px-3 py-2 text-sm placeholder-gray-400 focus:ring-indigo-500"
+                                className="w-full rounded-md border px-3 py-2 text-sm placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500"
                             />
                             <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
-                                className="rounded-md border px-3 py-2 text-sm focus:ring-indigo-500"
+                                className="rounded-md border px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
                             >
                                 <option value="">All Status</option>
                                 <option value="Active">Active</option>
                                 <option value="Inactive">Inactive</option>
                             </select>
-                            <button type="submit" className="rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700">
+                            <button 
+                                type="submit" 
+                                className="rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 transition"
+                            >
                                 Search
                             </button>
                         </form>
@@ -116,7 +138,7 @@ export default function Index({ patients, filters = {} }) {
                                     <tr key={p.id} className="hover:bg-gray-50 transition">
                                         <td className="px-4 py-3 text-sm font-medium">{p.patient_name}</td>
                                         <td className="px-4 py-3 text-sm">{p.age}</td>
-                                        <td className="px-4 py-3 text-sm">{p.occupation}</td>
+                                        <td className="px-4 py-3 text-sm">{p.occupation || '-'}</td>
                                         <td className="px-4 py-3 text-sm">{p.telephone}</td>
                                         <td className="px-4 py-3 text-sm">{p.email}</td>
                                         <td className="px-4 py-3 text-sm">

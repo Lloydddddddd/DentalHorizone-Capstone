@@ -21,6 +21,7 @@ class ArchivedPatient extends Model
         'status',
         'debit',
         'credit',
+        'email',
         'user_id',
     ];
 

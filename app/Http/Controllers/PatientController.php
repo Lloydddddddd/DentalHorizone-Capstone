@@ -168,8 +168,10 @@ class PatientController extends Controller
             'patient_status' => $patient->patient_status,
             'visit_status' => $patient->visit_status,
             'status' => $patient->status,
-            'debit' => $patient->debit,
-            'credit' => $patient->credit,
+            'email' => $patient->email ?? null,
+            'debit' => $patient->debit ?? 0,
+            'credit' => $patient->credit ?? 0,
+            'user_id' => $patient->user_id ?? 1, // Default to 1 if user_id is null
             'created_at' => now(),
             'updated_at' => now(),
         ]);
@@ -177,7 +179,7 @@ class PatientController extends Controller
         // Remove original patient
         $patient->delete();
 
-        return Redirect::route('patients.index')->with('success', 'Patient archived.');
+        return Redirect::route('patients.index')->with('success', 'Patient archived successfully.');
     }
 
     /**
