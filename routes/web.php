@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\PatientController;
@@ -9,8 +10,6 @@ use App\Http\Controllers\PatientVisitHistoryController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\AppointmentTableController;
-use App\Http\Controllers\DashboardController;
-use Illuminate\Support\Facades\Auth;
 
 Route::get('/', fn () => Inertia::render('Auth/Login'));
 
@@ -71,3 +70,4 @@ Route::post('/logout', function () {
     request()->session()->regenerateToken();
     return redirect('/');
 })->name('logout');
+
