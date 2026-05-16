@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\PatientController;
@@ -10,7 +9,6 @@ use App\Http\Controllers\PatientVisitHistoryController;
 use App\Http\Controllers\AppointmentController;
 
 Route::get('/', fn () => Inertia::render('Auth/Login'));
-
 Route::get('/landing', fn () => Inertia::render('Landing'));
 
 /*
@@ -20,6 +18,7 @@ Route::get('/landing', fn () => Inertia::render('Landing'));
 */
 Route::middleware(['auth', 'verified'])->group(function () {
 
+    // Dashboard
     Route::get('/dashboard', fn () => Inertia::render('Dashboard'))->name('dashboard');
 
     // Profile
@@ -27,7 +26,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // === PATIENTS ===
+    // Patients
     Route::resource('patients', PatientController::class);
     Route::post('patients/{patient}/archive', [PatientController::class, 'archive'])->name('patients.archive');
     Route::get('archived-patients', [PatientController::class, 'archivedIndex'])->name('archived-patients.index');
@@ -37,27 +36,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('visit-histories', PatientVisitHistoryController::class);
     Route::resource('appointments', AppointmentController::class);
 
-    // Profile
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
-    // === PATIENTS ===
-    Route::resource('patients', PatientController::class);
-    Route::post('patients/{patient}/archive', [PatientController::class, 'archive'])->name('patients.archive');
-    Route::get('archived-patients', [PatientController::class, 'archivedIndex'])->name('archived-patients.index');
-    Route::post('archived-patients/{archived}/restore', [PatientController::class, 'restore'])->name('archived-patients.restore');
-
-    // Other Resources
-    Route::resource('visit-histories', PatientVisitHistoryController::class);
-    Route::resource('appointments', AppointmentController::class);
-
-    // Page Routes - Use Controller where possible
+    // Page Routes
     Route::get('/patients', [PatientController::class, 'index'])->name('patients.index');
-    Route::get('/appointments', fn () => inertia('Appointments/Index'))->name('appointments.index');
-    Route::get('/payments', fn () => inertia('Payments/Index'))->name('payments.index');
-    Route::get('/reports', fn () => inertia('Reports/Index'))->name('reports.index');
-    Route::get('/settings', fn () => inertia('Settings/Index'))->name('settings.index');
+    Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index'); // ✅ fixed
+    Route::get('/payments', fn () => Inertia::render('Payments/Index'))->name('payments.index');
+    Route::get('/reports', fn () => Inertia::render('Reports/Index'))->name('reports.index');
+    Route::get('/settings', fn () => Inertia::render('Settings/Index'))->name('settings.index');
 });
 
 require __DIR__.'/auth.php';
