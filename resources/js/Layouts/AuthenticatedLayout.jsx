@@ -37,16 +37,8 @@ export default function AuthenticatedLayout({ header, children }) {
                                 >
                                     Patients
                                 </NavLink>
-<<<<<<< HEAD
                                 <NavLink href={route('services.index')} active={route().current('services.index')}>
                                      Dental Services
-=======
-                                <NavLink
-                                    href={route('archived-patients.index')}
-                                    active={route().current('archived-patients.*')}
-                                >
-                                    Archived Patients
->>>>>>> parent of f25ed1d (Merge remote-tracking branch 'origin/44-DentalServicesPageModule')
                                 </NavLink>
                             </div>
                         </div>
