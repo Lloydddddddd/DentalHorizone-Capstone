@@ -4,29 +4,31 @@ import { Head, Link, router } from '@inertiajs/react';
 import dayjs from 'dayjs';
 
 export default function Index({ appointments, filters }) {
+    const safeFilters = filters || {};
+
     const handleSearchChange = (e) => {
         router.get(route('appointments.index'), { 
             search: e.target.value, 
-            status: filters.status,
-            sort: filters.sort,
-            direction: filters.direction
+            status: safeFilters.status,
+            sort: safeFilters.sort,
+            direction: safeFilters.direction
         }, { preserveState: true, replace: true });
     };
 
     const handleStatusChange = (e) => {
         router.get(route('appointments.index'), { 
-            search: filters.search,
+            search: safeFilters.search,
             status: e.target.value,
-            sort: filters.sort,
-            direction: filters.direction
+            sort: safeFilters.sort,
+            direction: safeFilters.direction
         }, { preserveState: true, replace: true });
     };
 
     const handleSort = (column) => {
-        const newDirection = filters.sort === column && filters.direction === 'asc' ? 'desc' : 'asc';
+        const newDirection = safeFilters.sort === column && safeFilters.direction === 'asc' ? 'desc' : 'asc';
         router.get(route('appointments.index'), { 
-            search: filters.search,
-            status: filters.status,
+            search: safeFilters.search,
+            status: safeFilters.status,
             sort: column,
             direction: newDirection
         }, { preserveState: true, replace: true });
@@ -44,12 +46,12 @@ export default function Index({ appointments, filters }) {
                     <input
                         type="text"
                         placeholder="Search by patient name..."
-                        defaultValue={filters.search || ''}
+                        defaultValue={safeFilters.search || ''}
                         onChange={handleSearchChange}
                         className="border p-2 rounded w-1/3"
                     />
                     <select
-                        defaultValue={filters.status || ''}
+                        defaultValue={safeFilters.status || ''}
                         onChange={handleStatusChange}
                         className="border p-2 rounded"
                     >
@@ -65,17 +67,17 @@ export default function Index({ appointments, filters }) {
                     <thead>
                         <tr className="bg-gray-100 text-left">
                             <th className="px-4 py-2 border cursor-pointer" onClick={() => handleSort('date_of_visit')}>
-                                Date of Visit {filters.sort === 'date_of_visit' ? (filters.direction === 'asc' ? '▲' : '▼') : ''}
+                                Date of Visit {safeFilters.sort === 'date_of_visit' ? (safeFilters.direction === 'asc' ? '▲' : '▼') : ''}
                             </th>
                             <th className="px-4 py-2 border cursor-pointer" onClick={() => handleSort('next_appointment')}>
-                                Next Appointment {filters.sort === 'next_appointment' ? (filters.direction === 'asc' ? '▲' : '▼') : ''}
+                                Next Appointment {safeFilters.sort === 'next_appointment' ? (safeFilters.direction === 'asc' ? '▲' : '▼') : ''}
                             </th>
                             <th className="px-4 py-2 border">Name</th>
                             <th className="px-4 py-2 border">Complaint</th>
                             <th className="px-4 py-2 border">Service</th>
                             <th className="px-4 py-2 border">Visit Status</th>
                             <th className="px-4 py-2 border cursor-pointer" onClick={() => handleSort('balance')}>
-                                Balance {filters.sort === 'balance' ? (filters.direction === 'asc' ? '▲' : '▼') : ''}
+                                Balance {safeFilters.sort === 'balance' ? (safeFilters.direction === 'asc' ? '▲' : '▼') : ''}
                             </th>
                             <th className="px-4 py-2 border">Debit</th>
                             <th className="px-4 py-2 border">Credit</th>
