@@ -48,6 +48,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Custom Appointment Routes
     Route::get('/appointments/upcoming', [AppointmentTableController::class, 'upcoming'])->name('appointments.upcoming');
     Route::get('/appointments/missed', [AppointmentTableController::class, 'missed'])->name('appointments.missed');
+    // Profile
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // === PATIENTS ===
+    Route::resource('patients', PatientController::class);
+    Route::post('patients/{patient}/archive', [PatientController::class, 'archive'])->name('patients.archive');
+    Route::get('archived-patients', [PatientController::class, 'archivedIndex'])->name('archived-patients.index');
+    Route::post('archived-patients/{archived}/restore', [PatientController::class, 'restore'])->name('archived-patients.restore');
+
+    // Other Resources
+    Route::resource('visit-histories', PatientVisitHistoryController::class);
+    Route::resource('appointments', AppointmentController::class);
+
+    // Custom Appointment Routes
+    Route::get('/appointments/upcoming', [AppointmentTableController::class, 'upcoming'])->name('appointments.upcoming');
+    Route::get('/appointments/missed', [AppointmentTableController::class, 'missed'])->name('appointments.missed');
 
     // Page Routes - Use Controller where possible
     Route::get('/patients', [PatientController::class, 'index'])->name('patients.index');
@@ -70,4 +88,3 @@ Route::post('/logout', function () {
     request()->session()->regenerateToken();
     return redirect('/');
 })->name('logout');
-
