@@ -14,32 +14,11 @@ class PatientController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index(Request $request)
+    public function index()
     {
-        $query = Patient::query();
-
-        // Search query across common fields
-        if ($search = $request->input('q')) {
-            $query->where(function ($q) use ($search) {
-                $q->where('patient_name', 'like', "%{$search}%")
-                  ->orWhere('telephone', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('occupation', 'like', "%{$search}%");
-            });
-        }
-
-        // Filter by patient_status (Active / Inactive)
-        if ($status = $request->input('status')) {
-            $query->where('patient_status', $status);
-        }
-
-        $patients = $query->orderBy('patient_name')
-                          ->paginate(20)
-                          ->appends($request->only(['q', 'status']));
-
+        $patients = Patient::orderBy('patient_name')->paginate(20);
         return Inertia::render('Patients/Index', [
             'patients' => $patients,
-            'filters' => $request->only(['q', 'status']),
         ]);
     }
 
