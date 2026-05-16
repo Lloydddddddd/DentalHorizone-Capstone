@@ -8,7 +8,6 @@ use App\Http\Controllers\PatientController;
 use App\Http\Controllers\ArchivedPatientController;
 use App\Http\Controllers\PatientVisitHistoryController;
 use App\Http\Controllers\AppointmentController;
-use App\Http\Controllers\AppointmentTableController;
 
 Route::get('/', fn () => Inertia::render('Auth/Login'));
 
@@ -38,9 +37,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('visit-histories', PatientVisitHistoryController::class);
     Route::resource('appointments', AppointmentController::class);
 
-    // Custom Appointment Routes
-    Route::get('/appointments/upcoming', [AppointmentTableController::class, 'upcoming'])->name('appointments.upcoming');
-    Route::get('/appointments/missed', [AppointmentTableController::class, 'missed'])->name('appointments.missed');
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -55,10 +51,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Other Resources
     Route::resource('visit-histories', PatientVisitHistoryController::class);
     Route::resource('appointments', AppointmentController::class);
-
-    // Custom Appointment Routes
-    Route::get('/appointments/upcoming', [AppointmentTableController::class, 'upcoming'])->name('appointments.upcoming');
-    Route::get('/appointments/missed', [AppointmentTableController::class, 'missed'])->name('appointments.missed');
 
     // Page Routes - Use Controller where possible
     Route::get('/patients', [PatientController::class, 'index'])->name('patients.index');
