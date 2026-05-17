@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use App\Http\Controllers\PatientController;
 use App\Http\Controllers\ArchivedPatientController;
@@ -38,7 +39,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Page Routes
     Route::get('/patients', [PatientController::class, 'index'])->name('patients.index');
-    Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index'); // ✅ fixed
+    Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
     Route::get('/payments', fn () => Inertia::render('Payments/Index'))->name('payments.index');
     Route::get('/reports', fn () => Inertia::render('Reports/Index'))->name('reports.index');
     Route::get('/settings', fn () => Inertia::render('Settings/Index'))->name('settings.index');
