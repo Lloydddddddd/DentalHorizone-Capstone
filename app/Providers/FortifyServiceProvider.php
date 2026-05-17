@@ -52,9 +52,5 @@ class FortifyServiceProvider extends ServiceProvider
                 ($credentialId ?: $request->session()->getId()).'|'.$request->ip()
             );
         });
-
-        Fortify::redirects(function ($request) {
-            return '/landing';
-        });
     }
 }
