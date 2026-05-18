@@ -31,11 +31,19 @@ export default function AuthenticatedLayout({ header, children }) {
                                 >
                                     Dashboard
                                 </NavLink>
+
                                 <NavLink
                                     href={route('patients.index')}
                                     active={route().current('patients.*')}
                                 >
                                     Patients
+                                </NavLink>
+
+                                <NavLink
+                                    href={route('archived-patients.index')}
+                                    active={route().current('archived-patients.*')}
+                                >
+                                    Archived Patients
                                 </NavLink>
                             </div>
                         </div>
@@ -141,19 +149,21 @@ export default function AuthenticatedLayout({ header, children }) {
                         ' sm:hidden'
                     }
                 >
-                        <div className="space-y-1 pb-3 pt-2">
+                    <div className="space-y-1 pb-3 pt-2">
                         <ResponsiveNavLink
                             href={route('dashboard')}
                             active={route().current('dashboard')}
                         >
                             Dashboard
                         </ResponsiveNavLink>
+
                         <ResponsiveNavLink
                             href={route('patients.index')}
                             active={route().current('patients.*')}
                         >
                             Patients
                         </ResponsiveNavLink>
+
                         <ResponsiveNavLink
                             href={route('archived-patients.index')}
                             active={route().current('archived-patients.*')}
@@ -176,11 +186,13 @@ export default function AuthenticatedLayout({ header, children }) {
                             <ResponsiveNavLink href={route('profile.edit')}>
                                 Profile
                             </ResponsiveNavLink>
+
                             {user.is_admin && (
                                 <ResponsiveNavLink href={route('register')}>
                                     Create New Account
                                 </ResponsiveNavLink>
                             )}
+
                             <ResponsiveNavLink
                                 method="post"
                                 href={route('logout')}
@@ -205,3 +217,4 @@ export default function AuthenticatedLayout({ header, children }) {
         </div>
     );
 }
+
