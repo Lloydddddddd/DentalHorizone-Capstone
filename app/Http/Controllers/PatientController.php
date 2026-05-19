@@ -14,11 +14,31 @@ class PatientController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $patients = Patient::orderBy('patient_name')->paginate(20);
+        $query = Patient::orderBy('patient_name');
+
+        if ($search = $request->input('q')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('patient_name', 'like', "%{$search}%")
+                  ->orWhere('telephone', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('occupation', 'like', "%{$search}%");
+            });
+        }
+
+        if ($status = $request->input('status')) {
+            $query->where('patient_status', $status);
+        }
+
+        $patients = $query->paginate(20)->withQueryString();
+
+        // Total unfiltered count — kept in sync with what DashboardController reports
+        $totalPatients = Patient::count();
+
         return Inertia::render('Patients/Index', [
-            'patients' => $patients,
+            'patients'      => $patients,
+            'totalPatients' => $totalPatients,
         ]);
     }
 
