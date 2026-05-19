@@ -5,7 +5,7 @@ import Modal from '@/Components/Modal';
 import InlineForm from '@/Pages/Patients/InlineForm';
 import AddAppointmentPopup from '@/Components/AddAppointmentPopup';
 
-export default function Index({ patients }) {
+export default function Index({ patients, totalPatients }) {
     const { props } = usePage();
     const patientsData = patients && patients.data ? patients.data : [];
     const csrfToken =
@@ -55,7 +55,14 @@ export default function Index({ patients }) {
     };
 
     return (
-        <AuthenticatedLayout header={<h2 className="text-xl font-semibold">Patients</h2>}>
+        <AuthenticatedLayout header={
+            <div className="flex items-center gap-3">
+                <h2 className="text-xl font-semibold">Patients</h2>
+                <span className="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">
+                    {totalPatients ?? 0} total
+                </span>
+            </div>
+        }>
             <Head title="Patients" />
 
             <div className="p-6">
