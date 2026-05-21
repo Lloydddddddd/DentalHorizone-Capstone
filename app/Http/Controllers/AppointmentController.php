@@ -40,6 +40,57 @@ class AppointmentController extends Controller
         ]);
     }
 
+    public function upcoming(Request $request)
+    {
+        $query = Appointment::with('patient')
+            ->whereNotNull('next_appointment')
+            ->where('next_appointment', '>', now());
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->whereHas('patient', function ($q) use ($search) {
+                $q->where('patient_name', 'like', "%{$search}%");
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('visit_status', $request->input('status'));
+        }
+
+        $appointments = $query->orderBy('next_appointment', 'asc')
+                            ->paginate(10)
+                            ->withQueryString();
+
+        return inertia('Appointments/Upcoming', [
+            'appointments' => $appointments,
+            'filters' => $request->only(['search', 'status']),
+        ]);
+    }
+
+    public function missed(Request $request)
+    {
+        $query = Appointment::with('patient')
+            ->whereNotNull('next_appointment')
+            ->where('next_appointment', '<', now())
+            ->whereIn('visit_status', ['pending', 'missed']);
+
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->whereHas('patient', function ($q) use ($search) {
+                $q->where('patient_name', 'like', "%{$search}%");
+            });
+        }
+
+        $appointments = $query->orderBy('next_appointment', 'desc')
+                            ->paginate(10)
+                            ->withQueryString();
+
+        return inertia('Appointments/Missed', [
+            'appointments' => $appointments,
+            'filters' => $request->only(['search', 'status']),
+        ]);
+    }
+
     /**
      * Show the form for creating a new resource.
      */
