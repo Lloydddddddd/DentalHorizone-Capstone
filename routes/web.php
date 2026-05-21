@@ -44,7 +44,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Page Routes
     Route::get('/patients', [PatientController::class, 'index'])->name('patients.index');
+
+    // Appointments
     Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
+
+    // Upcoming & Missed Appointments
+    Route::get('/Appointments/Upcoming', [AppointmentController::class, 'upcoming'])->name('appointments.upcoming');
+    Route::get('/Appointments/Missed', [AppointmentController::class, 'missed'])->name('appointments.missed');
+
     Route::get('/payments', fn () => Inertia::render('Payments/Index'))->name('payments.index');
     Route::get('/reports', fn () => Inertia::render('Reports/Index'))->name('reports.index');
     Route::get('/settings', fn () => Inertia::render('Settings/Index'))->name('settings.index');
