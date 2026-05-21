@@ -7,6 +7,8 @@ import ScheduleTable from '../components/ScheduleTable';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 
 export default function Dashboard({ stats, todayAppointments, calendarAppointments }) {
+    const [appointmentsOpen, setAppointmentsOpen] = useState(false);
+
     // null = no filter, or one of: 'upcoming' | 'today' | 'missed'
     const [calendarFilter, setCalendarFilter] = useState(null);
     const [calendarOpen, setCalendarOpen] = useState(false);
@@ -23,7 +25,14 @@ export default function Dashboard({ stats, todayAppointments, calendarAppointmen
     const sidebarItems = useMemo(
         () => [
             { label: 'Patients', href: '/patients' },
-            { label: 'Appointments', href: '/appointments' },
+            {
+                label: 'Appointments',
+                children: [
+                    { label: 'All Appointments', href: '/appointments' },
+                    { label: 'Upcoming Appointments', href: '/Appointments/Upcoming' },
+                    { label: 'Missed Appointments', href: '/Appointments/Missed' },
+                ],
+            },
             { label: 'Reports', href: '/reports' },
         ],
         [],
@@ -70,6 +79,50 @@ export default function Dashboard({ stats, todayAppointments, calendarAppointmen
 
                     <nav className="flex-1 px-3 py-2 flex flex-col gap-1">
                         {sidebarItems.map((item) => {
+                            if (item.children) {
+                                return (
+                                    <div key={item.label} className="flex flex-col">
+                                        {/* Parent button */}
+                                        <button
+                                            type="button"
+                                            onClick={() => setAppointmentsOpen((prev) => !prev)}
+                                            className={`flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-colors ${
+                                                url.startsWith('/appointments')
+                                                    ? 'bg-primary text-white'
+                                                    : 'text-muted hover:bg-secondary hover:text-foreground'
+                                            } ${sidebarOpen ? '' : 'justify-center'}`}
+                                        >
+                                            <span className="w-2.5 h-2.5 rounded-full bg-current opacity-70" />
+                                            {sidebarOpen && <span className="truncate">{item.label}</span>}
+                                            {sidebarOpen && <span className="ml-auto">{appointmentsOpen ? '▾' : '▸'}</span>}
+                                        </button>
+
+                                        {/* Children links (only show if open) */}
+                                        {appointmentsOpen && (
+                                            <div className="ml-6 flex flex-col gap-1">
+                                                {item.children.map((child) => {
+                                                    const active = url && (url === child.href || url.startsWith(child.href));
+                                                    return (
+                                                        <Link
+                                                            key={child.href}
+                                                            href={child.href}
+                                                            className={`flex items-center gap-3 px-3 py-2 rounded text-sm transition-colors ${
+                                                                active
+                                                                    ? 'bg-primary text-white'
+                                                                    : 'text-muted hover:bg-secondary hover:text-foreground'
+                                                            }`}
+                                                        >
+                                                            {child.label}
+                                                        </Link>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            }
+
+                            // Normal single link
                             const active = url && (url === item.href || url.startsWith(item.href));
                             return (
                                 <Link
@@ -87,6 +140,7 @@ export default function Dashboard({ stats, todayAppointments, calendarAppointmen
                             );
                         })}
                     </nav>
+
                 </aside>
 
                 <div className="flex-1 flex flex-col overflow-hidden">
