@@ -64,7 +64,12 @@ export default function Missed({ auth, appointments, filters }) {
                             {appointments.data.map((appointment) => (
                                 <tr key={appointment.id}>
                                     <td>{appointment.date_of_visit}</td>
-                                    <td>{appointment.next_appointment ?? '-'}</td>
+                                    <td>{appointment.next_appointment 
+                                        ? new Date(appointment.next_appointment).toLocaleString('en-PH', { 
+                                            year: 'numeric', month: 'short', day: 'numeric', 
+                                            hour: '2-digit', minute: '2-digit' 
+                                            }) 
+                                        : '-'}</td>
                                     <td>{appointment.patient?.patient_name}</td>
                                     <td>{appointment.complaint}</td>
                                     <td>{appointment.service}</td>
