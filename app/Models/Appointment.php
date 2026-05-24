@@ -21,6 +21,29 @@ class Appointment extends Model
         'balance',
     ];
 
+    protected $casts = [
+        'date_of_visit' => 'datetime',
+        'next_appointment' => 'datetime',
+    ];
+
+    public function getDateOfVisitAttribute($value)
+    {
+        return $value 
+            ? \Carbon\Carbon::parse($value)
+                ->timezone('Asia/Manila')
+                ->format('M d, Y h:i A') 
+            : null;
+    }
+
+    public function getNextAppointmentAttribute($value)
+    {
+        return $value 
+            ? \Carbon\Carbon::parse($value)
+                ->timezone('Asia/Manila')
+                ->format('M d, Y h:i A') 
+            : null;
+    }
+
     public function patient()
     {
         return $this->belongsTo(Patient::class);
