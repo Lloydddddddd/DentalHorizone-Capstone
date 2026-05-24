@@ -1,9 +1,10 @@
 <?php
 
 namespace App\Http\Controllers;
-use App\Models\Appointment;
 
+use App\Models\Appointment;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class AppointmentController extends Controller
 {
@@ -42,9 +43,11 @@ class AppointmentController extends Controller
 
     public function upcoming(Request $request)
     {
+        $now = Carbon::now();
+
         $query = Appointment::with('patient')
             ->whereNotNull('next_appointment')
-            ->where('next_appointment', '>', now());
+            ->where('next_appointment', '>', $now);
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -58,8 +61,8 @@ class AppointmentController extends Controller
         }
 
         $appointments = $query->orderBy('next_appointment', 'asc')
-                            ->paginate(10)
-                            ->withQueryString();
+            ->paginate(10)
+            ->withQueryString();
 
         return inertia('Appointments/Upcoming', [
             'appointments' => $appointments,
@@ -69,10 +72,11 @@ class AppointmentController extends Controller
 
     public function missed(Request $request)
     {
+        $now = Carbon::now();
+
         $query = Appointment::with('patient')
             ->whereNotNull('next_appointment')
-            ->where('next_appointment', '<', now())
-            ->whereIn('visit_status', ['pending', 'missed']);
+            ->where('next_appointment', '<', $now);
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -81,22 +85,18 @@ class AppointmentController extends Controller
             });
         }
 
+        if ($request->filled('status')) {
+            $query->where('visit_status', $request->input('status'));
+        }
+
         $appointments = $query->orderBy('next_appointment', 'desc')
-                            ->paginate(10)
-                            ->withQueryString();
+            ->paginate(10)
+            ->withQueryString();
 
         return inertia('Appointments/Missed', [
             'appointments' => $appointments,
             'filters' => $request->only(['search', 'status']),
         ]);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
     }
 
     /**
@@ -115,16 +115,12 @@ class AppointmentController extends Controller
             'debit' => 'nullable|numeric|min:0',
             'credit' => 'nullable|numeric|min:0',
             'balance' => 'nullable|numeric',
-        ], [
-            'debit.numeric' => 'Debit must be a number.',
-            'credit.numeric' => 'Credit must be a number.',
-            'debit.min' => 'Debit cannot be negative.',
-            'credit.min' => 'Credit cannot be negative.',
-            'balance.numeric' => 'Balance must be a valid number.',
         ]);
 
         if ($request->boolean('no_next_appointment')) {
             $validated['next_appointment'] = null;
+        } elseif ($request->filled('next_appointment')) {
+            $validated['next_appointment'] = Carbon::parse($request->input('next_appointment'));
         }
 
         $validated['balance'] = ($validated['debit'] ?? 0) - ($validated['credit'] ?? 0);
@@ -132,6 +128,14 @@ class AppointmentController extends Controller
         Appointment::create($validated);
 
         return redirect()->route('appointments.index');
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        //
     }
 
     /**
