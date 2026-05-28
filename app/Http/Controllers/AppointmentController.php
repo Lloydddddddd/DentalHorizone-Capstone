@@ -13,7 +13,7 @@ class AppointmentController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Appointment::with('patient');
+        $query = Appointment::with(['patient', 'services']);
 
         // Search by patient name
         if ($request->filled('search')) {
@@ -45,7 +45,7 @@ class AppointmentController extends Controller
     {
         $now = Carbon::now();
 
-        $query = Appointment::with('patient')
+        $query = Appointment::with(['patient', 'services'])
             ->whereNotNull('next_appointment')
             ->where('next_appointment', '>', $now);
 
@@ -74,7 +74,7 @@ class AppointmentController extends Controller
     {
         $now = Carbon::now();
 
-        $query = Appointment::with('patient')
+        $query = Appointment::with(['patient', 'services'])
             ->whereNotNull('next_appointment')
             ->where('next_appointment', '<', $now);
 
@@ -107,7 +107,6 @@ class AppointmentController extends Controller
         $validated = $request->validate([
             'patient_id' => 'required|exists:patients,id',
             'complaint' => 'required|string|max:200',
-            'service' => 'required|string|max:100',
             'date_of_visit' => 'required|date',
             'next_appointment' => 'nullable|date',
             'no_next_appointment' => 'nullable|boolean',
@@ -115,6 +114,12 @@ class AppointmentController extends Controller
             'debit' => 'nullable|numeric|min:0',
             'credit' => 'nullable|numeric|min:0',
             'balance' => 'nullable|numeric',
+            'note' => 'nullable|string|max:500',
+
+            // multiple services
+            'services' => 'required|array|min:1',
+            'services.*.id' => 'required|exists:services,id',
+            'services.*.note' => 'nullable|string|max:500',
         ]);
 
         if ($request->boolean('no_next_appointment')) {
@@ -125,7 +130,25 @@ class AppointmentController extends Controller
 
         $validated['balance'] = ($validated['debit'] ?? 0) - ($validated['credit'] ?? 0);
 
-        Appointment::create($validated);
+        // Create the appointment row
+        $appointment = Appointment::create([
+            'patient_id' => $validated['patient_id'],
+            'complaint' => $validated['complaint'],
+            'date_of_visit' => $validated['date_of_visit'],
+            'next_appointment' => $validated['next_appointment'],
+            'visit_status' => $validated['visit_status'],
+            'debit' => $validated['debit'] ?? 0,
+            'credit' => $validated['credit'] ?? 0,
+            'balance' => $validated['balance'],
+            'note' => $validated['note'] ?? null,
+        ]);
+
+        // Attach multiple services to the pivot table
+        foreach ($validated['services'] as $srv) {
+            $appointment->services()->attach($srv['id'], [
+                'note' => $srv['note'] ?? null,
+            ]);
+        }
 
         return redirect()->route('appointments.index');
     }
