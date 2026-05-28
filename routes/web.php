@@ -39,6 +39,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('visit-histories', PatientVisitHistoryController::class);
     Route::resource('appointments', AppointmentController::class);
 
+    //JSON endpoint for services
+    Route::get('/services/list', [ServiceController::class, 'list'])->name('services.list');
     // ✅ Dental Services
     Route::resource('services', ServiceController::class);
 
