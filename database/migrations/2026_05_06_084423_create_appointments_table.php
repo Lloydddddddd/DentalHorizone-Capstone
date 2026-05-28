@@ -15,7 +15,8 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('patient_id'); // link to patients table
             $table->string('complaint', 200);
-            $table->string('service', 100);
+            $table->unsignedBigInteger('service'); // link to services table
+            $table->foreign('service')->references('id')->on('services')->onDelete('cascade');
             $table->dateTime('date_of_visit');
             $table->dateTime('next_appointment')->nullable();
             $table->string('visit_status', 50);
