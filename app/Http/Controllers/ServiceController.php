@@ -18,6 +18,11 @@ class ServiceController extends Controller
         ]);
     }
 
+    public function list()
+    {
+        $services = Service::select('id', 'name', 'price')->get();
+        return response()->json(['services' => $services]);
+    }
 
     public function store(Request $request)
     {
@@ -51,5 +56,3 @@ class ServiceController extends Controller
         return redirect()->route('services.index');
     }
 }
-
-

@@ -12,13 +12,13 @@ class Appointment extends Model
     protected $fillable = [
         'patient_id',
         'complaint',
-        'service',
         'date_of_visit',
         'next_appointment',
         'visit_status',
         'debit',
         'credit',
         'balance',
+        'note',
     ];
 
     protected $casts = [
@@ -47,5 +47,12 @@ class Appointment extends Model
     public function patient()
     {
         return $this->belongsTo(Patient::class);
+    }
+
+    public function services()
+    {
+        return $this->belongsToMany(Service::class, 'appointment_service')
+                ->withPivot('note')
+                ->withTimestamps();
     }
 }
