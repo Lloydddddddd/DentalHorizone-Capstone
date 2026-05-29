@@ -28,8 +28,8 @@ export default function AddAppointmentPopup({ patient = null, onClose = () => {}
         next_appointment: '',
         no_next_appointment: false,
         visit_status: 'pending',
-        debit: 0,
-        credit: 0,
+        debit: "",
+        credit: "",
         balance: 0,
         note: '',
     });
@@ -52,20 +52,21 @@ export default function AddAppointmentPopup({ patient = null, onClose = () => {}
     }, [patient]);
 
     const handleDebitChange = (e) => {
-        const value = parseFloat(e.target.value) || 0;
-        setData('debit', value);
+        const value = e.target.value;
+        setData('debit', value); // store raw string
 
-        // Balance always recalculated
-        setData('balance', value - (parseFloat(data.credit) || 0));
+        const debitNum = parseFloat(value) || 0;
+        const creditNum = parseFloat(data.credit) || 0;
+        setData('balance', debitNum - creditNum);
     };
 
     const handleCreditChange = (e) => {
-        const value = parseFloat(e.target.value) || 0;
-        setData('credit', value);
+        const value = e.target.value;
+        setData('credit', value); // store raw string
 
-        // Always use current debit value
-        const currentDebit = parseFloat(data.debit) || 0;
-        setData('balance', currentDebit - value);
+        const debitNum = parseFloat(data.debit) || 0;
+        const creditNum = parseFloat(value) || 0;
+        setData('balance', debitNum - creditNum);
     };
 
     function handleSubmit(e) {
@@ -104,10 +105,10 @@ export default function AddAppointmentPopup({ patient = null, onClose = () => {}
         }
 
         // Debit/Credit must be non-negative
-        if (data.debit < 0) {
+        if (parseFloat(data.debit) < 0) {
             validationErrors.debit = "Debit cannot be negative.";
         }
-        if (data.credit < 0) {
+        if (parseFloat(data.credit) < 0) {
             validationErrors.credit = "Credit cannot be negative.";
         }
 
@@ -126,9 +127,9 @@ export default function AddAppointmentPopup({ patient = null, onClose = () => {}
                 next_appointment: data.next_appointment,
                 no_next_appointment: data.no_next_appointment,
                 visit_status: data.visit_status,
-                debit: data.debit,
-                credit: data.credit,
-                balance: data.balance,
+                debit: parseFloat(data.debit) || 0,
+                credit: parseFloat(data.credit) || 0,
+                balance: parseFloat(data.balance) || 0,
                 note: data.note,
                 services: data.services, // send array of {id, note}
             },
@@ -286,11 +287,7 @@ export default function AddAppointmentPopup({ patient = null, onClose = () => {}
                                 <TextInput
                                     type="number"
                                     value={data.debit}
-                                    onChange={(e) => {
-                                        const value = parseFloat(e.target.value) || 0;
-                                        setData('debit', value);
-                                        setData('balance', value - (parseFloat(data.credit) || 0));
-                                    }}
+                                    onChange={handleDebitChange}   // <-- use the handler here
                                     className="mt-1 w-full"
                                 />
                                 <InputError message={localErrors.debit || errors.debit} />
