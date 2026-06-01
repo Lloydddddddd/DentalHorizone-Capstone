@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
@@ -27,5 +29,12 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('create-user', function ($user) {
             return $user->is_admin;
         });
+
+        // Share auth user with Inertia
+        Inertia::share([
+            'auth' => [
+                'user' => fn () => Auth::user(),
+            ],
+        ]);
     }
 }
