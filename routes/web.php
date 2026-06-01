@@ -11,8 +11,8 @@ use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\DashboardController;
 
-Route::get('/', fn () => Inertia::render('Auth/Login'));
-Route::get('/landing', fn () => Inertia::render('Landing'));
+Route::get('/', fn () => Inertia::render('Landing'))->name('landing');
+Route::get('/login', fn () => Inertia::render('Auth/Login'))->name('login');
 
 /*
 |--------------------------------------------------------------------------
