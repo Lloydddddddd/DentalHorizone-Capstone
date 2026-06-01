@@ -1,9 +1,11 @@
 import React from "react";
-import { Link } from "@inertiajs/react";
 import GuestLayout from "../Layouts/GuestLayout";
 import "../../css/Landing.css";
+import { Link, usePage } from "@inertiajs/react";
 
 const Landing = () => {
+  const { auth } = usePage().props;
+
   return (
     <GuestLayout>
       <div className="landing-page">
@@ -13,19 +15,25 @@ const Landing = () => {
           <ul className="nav-links">
             <li><Link href="/">Home</Link></li>
             <li><Link href="/services">Services</Link></li>
-            <li><Link href="/dashboard">Dashboard</Link></li>
-            <li><Link href="/patients">Patient Management</Link></li>
-            <li><Link href="/appointments">Appointment Management</Link></li>
           </ul>
           <div className="nav-actions">
-            <Link
-              href={route("logout")}
-              method="post"
-              as="button"
-              className="logout"
-            >
-              Logout
-            </Link>
+            {auth.user ? (
+              <Link
+                href={route("logout")}
+                method="post"
+                as="button"
+                className="logout"
+              >
+                Logout
+              </Link>
+            ) : (
+              <Link
+                href={route("login")}
+                className="login"
+              >
+                Login
+              </Link>
+            )}
           </div>
         </nav>
 
@@ -39,9 +47,15 @@ const Landing = () => {
               lifecycles.
             </p>
             <div className="hero-buttons">
-              <Link href="/dashboard" className="btn primary">
-                Go to Dashboard
-              </Link>
+              {auth.user ? (
+                <Link href="/dashboard" className="btn primary">
+                  Go to Dashboard
+                </Link>
+              ) : (
+                <Link href={route("login")} className="btn primary">
+                  Login to Continue
+                </Link>
+              )}
             </div>
           </div>
 

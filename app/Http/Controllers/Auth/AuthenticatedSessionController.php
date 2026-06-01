@@ -32,7 +32,7 @@ class AuthenticatedSessionController extends Controller
          $request->authenticate();
          $request->session()->regenerate();
 
-         return redirect()->intended('/landing'); // send to Landing after login
+         return redirect()->intended('/dashboard'); // send to Dashboard after login
     }
 
 

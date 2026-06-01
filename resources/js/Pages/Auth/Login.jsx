@@ -15,7 +15,7 @@ export default function Login({ status, canResetPassword }) {
 
     const submit = (e) => {
         e.preventDefault();
-        post(route('login'), {
+        post(route('login.store'), {
             onFinish: () => reset('password'),
         });
     };
@@ -26,7 +26,7 @@ export default function Login({ status, canResetPassword }) {
 
             <div className="max-w-md mx-auto mt-10 bg-white shadow rounded-lg p-6">
                 <h1 className="text-2xl font-bold text-center text-gray-800">
-                    Dental Horizon
+                    Dental Horizone
                 </h1>
                 <p className="text-sm text-gray-600 text-center mb-6">
                     Sign in to manage patient records
