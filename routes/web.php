@@ -10,8 +10,17 @@ use App\Http\Controllers\PatientVisitHistoryController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\DashboardController;
+use App\Models\Service;
 
-Route::get('/', fn () => Inertia::render('Landing'))->name('landing');
+Route::get('/', function () {
+    return Inertia::render('Landing', [
+        'services' => Service::all(),
+    ]);
+});
+
+// Public booking route (patients can book without login)
+Route::post('/appointments/public-store', [AppointmentController::class, 'publicStore'])->name('appointments.publicStore');
+
 Route::get('/login', fn () => Inertia::render('Auth/Login'))->name('login');
 
 /*
