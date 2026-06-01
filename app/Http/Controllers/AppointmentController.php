@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Appointment;
+use App\Models\Patient;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -15,7 +16,6 @@ class AppointmentController extends Controller
     {
         $query = Appointment::with(['patient', 'services']);
 
-        // Search by patient name
         if ($request->filled('search')) {
             $search = $request->input('search');
             $query->whereHas('patient', function ($q) use ($search) {
@@ -23,14 +23,12 @@ class AppointmentController extends Controller
             });
         }
 
-        // Filter by visit status
         if ($request->filled('status')) {
             $query->where('visit_status', $request->input('status'));
         }
 
-        // Sorting
-        $sort = $request->input('sort', 'date_of_visit'); // default sort
-        $direction = $request->input('direction', 'desc'); // default direction
+        $sort = $request->input('sort', 'date_of_visit');
+        $direction = $request->input('direction', 'desc');
         $query->orderBy($sort, $direction);
 
         $appointments = $query->paginate(10)->withQueryString();
@@ -100,7 +98,7 @@ class AppointmentController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Store a newly created resource in storage (Admin/Secretary use).
      */
     public function store(Request $request)
     {
@@ -115,8 +113,6 @@ class AppointmentController extends Controller
             'credit' => 'nullable|numeric|min:0',
             'balance' => 'nullable|numeric',
             'note' => 'nullable|string|max:500',
-
-            // multiple services
             'services' => 'required|array|min:1',
             'services.*.id' => 'required|exists:services,id',
             'services.*.note' => 'nullable|string|max:500',
@@ -130,7 +126,6 @@ class AppointmentController extends Controller
 
         $validated['balance'] = ($validated['debit'] ?? 0) - ($validated['credit'] ?? 0);
 
-        // Create the appointment row
         $appointment = Appointment::create([
             'patient_id' => $validated['patient_id'],
             'complaint' => $validated['complaint'],
@@ -143,7 +138,6 @@ class AppointmentController extends Controller
             'note' => $validated['note'] ?? null,
         ]);
 
-        // Attach multiple services to the pivot table
         foreach ($validated['services'] as $srv) {
             $appointment->services()->attach($srv['id'], [
                 'note' => $srv['note'] ?? null,
@@ -154,42 +148,58 @@ class AppointmentController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Store appointment from public "Book Appointment" form.
      */
-    public function create()
+    public function publicStore(Request $request)
     {
-        //
+        $validated = $request->validate([
+        'patient_name' => 'required|string|max:100',
+        'contact' => 'required|string|max:50',
+        'email' => 'required|email|max:100',
+        'telephone' => 'nullable|string|max:50',
+        'age' => 'required|integer|min:0',
+        'occupation' => 'nullable|string|max:100',
+        'address' => 'nullable|string|max:200',
+        'date_of_visit' => 'required|date',
+        'services' => 'required|array|min:1',
+        'services.*' => 'exists:services,id',
+        'complaint' => 'nullable|string|max:200',
+        'note' => 'nullable|string|max:500',
+    ]);
+
+        $patient = Patient::updateOrCreate(
+            ['email' => $validated['email']],
+            [
+                'patient_name' => $validated['patient_name'],
+                'telephone' => $validated['telephone'] ?? null,
+                'contact' => $validated['contact'],
+                'age' => $validated['age'],
+                'occupation' => $validated['occupation'] ?? null,
+                'address' => $validated['address'] ?? null,
+            ]
+        );
+
+        $appointment = Appointment::create([
+            'patient_id' => $patient->id,
+            'complaint' => $validated['complaint'] ?? null,
+            'date_of_visit' => $validated['date_of_visit'],
+            'visit_status' => 'Pending',
+            'debit' => 0,
+            'credit' => 0,
+            'balance' => 0,
+            'note' => $validated['note'] ?? null,
+        ]);
+
+        foreach ($validated['services'] as $srvId) {
+            $appointment->services()->attach($srvId);
+        }
+
+        return redirect()->back()->with('success', 'Your appointment request has been submitted!');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
-    }
+    public function create() {}
+    public function show(string $id) {}
+    public function edit(string $id) {}
+    public function update(Request $request, string $id) {}
+    public function destroy(string $id) {}
 }
