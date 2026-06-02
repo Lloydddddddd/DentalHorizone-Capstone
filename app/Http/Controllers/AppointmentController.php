@@ -153,45 +153,46 @@ class AppointmentController extends Controller
     public function publicStore(Request $request)
     {
         $validated = $request->validate([
-        'patient_name' => 'required|string|max:100',
-        'contact' => 'required|string|max:50',
-        'email' => 'required|email|max:100',
-        'telephone' => 'nullable|string|max:50',
-        'age' => 'required|integer|min:0',
-        'occupation' => 'nullable|string|max:100',
-        'address' => 'nullable|string|max:200',
-        'date_of_visit' => 'required|date',
-        'services' => 'required|array|min:1',
-        'services.*' => 'exists:services,id',
-        'complaint' => 'nullable|string|max:200',
-        'note' => 'nullable|string|max:500',
-    ]);
+            'patient_name'   => 'required|string|max:100',
+            'email'          => 'required|email|max:100',
+            'telephone'      => 'required|string|max:50',
+            'age'            => 'required|integer|min:0',
+            'occupation'     => 'nullable|string|max:100',
+            'address'        => 'nullable|string|max:200',
+            'date_of_visit' => 'required|date_format:Y-m-d\TH:i',
+            'services'       => 'required|array|min:1',
+            'services.*'     => 'exists:services,id',
+            'complaint'      => 'nullable|string|max:200',
+            'note'           => 'nullable|string|max:500',
+        ]);
 
         $patient = Patient::updateOrCreate(
             ['email' => $validated['email']],
             [
                 'patient_name' => $validated['patient_name'],
-                'telephone' => $validated['telephone'] ?? null,
-                'contact' => $validated['contact'],
-                'age' => $validated['age'],
-                'occupation' => $validated['occupation'] ?? null,
-                'address' => $validated['address'] ?? null,
+                'telephone'    => $validated['telephone'] ?? null,
+                'age'          => $validated['age'],
+                'occupation'   => $validated['occupation'] ?? null,
+                'address'      => $validated['address'] ?? null,
             ]
         );
 
         $appointment = Appointment::create([
-            'patient_id' => $patient->id,
-            'complaint' => $validated['complaint'] ?? null,
-            'date_of_visit' => $validated['date_of_visit'],
-            'visit_status' => 'Pending',
-            'debit' => 0,
-            'credit' => 0,
-            'balance' => 0,
-            'note' => $validated['note'] ?? null,
+            'patient_id'     => $patient->id,
+            'complaint'      => $validated['complaint'] ?? null,
+            'date_of_visit'  => $validated['date_of_visit'],
+            'next_appointment'=> $validated['date_of_visit'], // align with upcoming/missed logic
+            'visit_status'   => 'pending', // standardized lowercase
+            'debit'          => 0,
+            'credit'         => 0,
+            'balance'        => 0,
+            'note'           => $validated['note'] ?? null,
         ]);
 
         foreach ($validated['services'] as $srvId) {
-            $appointment->services()->attach($srvId);
+            $appointment->services()->attach($srvId, [
+                'note'  => null // optional pivot note
+            ]);
         }
 
         return redirect()->back()->with('success', 'Your appointment request has been submitted!');
