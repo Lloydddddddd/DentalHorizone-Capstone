@@ -126,6 +126,17 @@ class AppointmentController extends Controller
 
         $validated['balance'] = ($validated['debit'] ?? 0) - ($validated['credit'] ?? 0);
 
+        // Prevent overlapping schedule for admin-created appointments
+        $conflict = Appointment::where('date_of_visit', $validated['date_of_visit'])
+            ->whereIn('visit_status', ['pending', 'confirmed'])
+            ->exists();
+
+        if ($conflict) {
+            return redirect()->back()->withErrors([
+                'date_of_visit' => 'This time slot is already taken. Please choose another.',
+            ])->withInput();
+        }
+
         $appointment = Appointment::create([
             'patient_id' => $validated['patient_id'],
             'complaint' => $validated['complaint'],
@@ -165,6 +176,16 @@ class AppointmentController extends Controller
             'complaint'      => 'nullable|string|max:200',
             'note'           => 'nullable|string|max:500',
         ]);
+
+        $conflict = Appointment::where('date_of_visit', $validated['date_of_visit'])
+            ->whereIn('visit_status', ['pending', 'confirmed']) // only block active appointments
+            ->exists();
+
+        if ($conflict) {
+            return redirect()->back()->withErrors([
+                'date_of_visit' => 'This time slot is already taken. Please choose another.',
+            ])->withInput();
+        }
 
         $patient = Patient::updateOrCreate(
             ['email' => $validated['email']],
