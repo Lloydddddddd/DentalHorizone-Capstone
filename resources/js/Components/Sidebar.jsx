@@ -24,18 +24,18 @@ export default function Sidebar() {
 
     return (
         <aside
-            className={`shrink-0 border-r border-border bg-surface transition-all duration-300 flex flex-col h-screen ${
-                sidebarOpen ? 'w-64' : 'w-16'
+            className={`shrink-0 border-r border-gray-200 bg-white transition-all duration-300 flex flex-col h-screen ${
+                sidebarOpen ? 'w-64' : 'w-20'
             }`}
         >
             {/* Logo + Toggle */}
-            <div className="p-4 flex items-center justify-between">
+            <div className="p-4 flex items-center justify-between border-b border-gray-100">
                 <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-9 h-9 rounded-lg bg-primary text-white flex items-center justify-center font-bold">
+                    <div className="w-10 h-10 rounded-lg bg-primary text-white flex items-center justify-center font-bold">
                         DH
                     </div>
                     {sidebarOpen && (
-                        <span className="font-bold text-lg text-foreground font-headings truncate">
+                        <span className="font-bold text-lg text-gray-800 truncate">
                             Dental Horizon
                         </span>
                     )}
@@ -43,14 +43,14 @@ export default function Sidebar() {
                 <button
                     type="button"
                     onClick={() => setSidebarOpen((v) => !v)}
-                    className="text-foreground/70 hover:text-foreground p-2 rounded transition-colors"
+                    className="text-gray-500 hover:text-gray-700 p-2 rounded transition-colors"
                 >
-                    <span className="text-sm">{sidebarOpen ? '❮' : '❯'}</span>
+                    <span className="text-lg">{sidebarOpen ? '❮' : '❯'}</span>
                 </button>
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 px-3 py-2 flex flex-col gap-1 overflow-y-auto">
+            <nav className="flex-1 px-2 py-4 flex flex-col gap-1 overflow-y-auto">
                 {sidebarItems.map((item) => {
                     if (item.children) {
                         return (
@@ -59,19 +59,23 @@ export default function Sidebar() {
                                 <button
                                     type="button"
                                     onClick={() => setAppointmentsOpen((prev) => !prev)}
-                                    className={`flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-colors ${
+                                    className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                                         url.startsWith('/appointments')
                                             ? 'bg-primary text-white'
-                                            : 'text-muted hover:bg-secondary hover:text-foreground'
+                                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                                     } ${sidebarOpen ? '' : 'justify-center'}`}
                                 >
                                     <span className="w-2.5 h-2.5 rounded-full bg-current opacity-70" />
                                     {sidebarOpen && <span className="truncate">{item.label}</span>}
-                                    {sidebarOpen && <span className="ml-auto">{appointmentsOpen ? '▾' : '▸'}</span>}
+                                    {sidebarOpen && (
+                                        <span className="ml-auto text-xs">
+                                            {appointmentsOpen ? '▾' : '▸'}
+                                        </span>
+                                    )}
                                 </button>
 
                                 {/* Children links */}
-                                {appointmentsOpen && (
+                                {appointmentsOpen && sidebarOpen && (
                                     <div className="ml-6 flex flex-col gap-1">
                                         {item.children.map((child) => {
                                             const active = url && (url === child.href || url.startsWith(child.href));
@@ -79,10 +83,10 @@ export default function Sidebar() {
                                                 <Link
                                                     key={child.href}
                                                     href={child.href}
-                                                    className={`flex items-center gap-3 px-3 py-2 rounded text-sm transition-colors ${
+                                                    className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
                                                         active
                                                             ? 'bg-primary text-white'
-                                                            : 'text-muted hover:bg-secondary hover:text-foreground'
+                                                            : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                                                     }`}
                                                 >
                                                     {child.label}
@@ -101,10 +105,10 @@ export default function Sidebar() {
                         <Link
                             key={item.href}
                             href={item.href}
-                            className={`flex items-center gap-3 px-3 py-2.5 rounded text-sm font-medium transition-colors ${
+                            className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                                 active
                                     ? 'bg-primary text-white'
-                                    : 'text-muted hover:bg-secondary hover:text-foreground'
+                                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                             } ${sidebarOpen ? '' : 'justify-center'}`}
                         >
                             <span className="w-2.5 h-2.5 rounded-full bg-current opacity-70" />
