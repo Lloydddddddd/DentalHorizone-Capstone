@@ -69,12 +69,14 @@ export default function DentalServices() {
       <div className="p-8 bg-gray-50 min-h-screen">
         {/* Page header */}
         <div className="flex justify-between items-center mb-10">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dental Services</h1>
-            <p className="text-gray-600 mt-1">
-              A complete catalog of dental services with standardized descriptions and pricing for clinic use.
-            </p>
-          </div>
+          <div className="flex items-center gap-3">
+          <h2 className="text-xl font-semibold">Dental Services</h2>
+          <span className="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">
+            Catalog
+          </span>
+        </div>
+
+
           <PrimaryButton onClick={() => {
             reset();
             setShowModal(true);
