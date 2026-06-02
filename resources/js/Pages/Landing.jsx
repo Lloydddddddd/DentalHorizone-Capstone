@@ -10,10 +10,10 @@ import WhyChooseUs from "@/Components/WhyChooseUs";
 const Landing = () => {
   const { services, flash } = usePage().props;
 
-  const { data, setData, post, processing } = useForm({
+  const { data, setData, post, processing, reset } = useForm({
     patient_name: "",
     age: "",
-    contact: "",   // ✅ merged telephone + contact
+    telephone: "",
     email: "",
     occupation: "",
     address: "",
@@ -25,7 +25,12 @@ const Landing = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    post(route("appointments.publicStore"));
+    post(route("appointments.publicStore"), {
+      onSuccess: () => {
+        reset(); // clears all fields after successful booking
+        setData("services", []);
+      },
+    });
   };
 
   const cardColors = [
@@ -50,7 +55,23 @@ const Landing = () => {
             
           </ul>
           <div className="nav-actions">
-            <Link href="/login" className="login">Login</Link>
+              {usePage().props.auth?.user ? (
+                <Link
+                  href={route("logout")}
+                  method="post"
+                  as="button"
+                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+                >
+                  Logout
+                </Link>
+              ) : (
+                <Link
+                  href={route("login")}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                >
+                  Login
+                </Link>
+              )}
           </div>
         </nav>
 
@@ -71,6 +92,15 @@ const Landing = () => {
               >
                 Make Appointment
               </button>
+
+              {usePage().props.auth?.user && (
+                <Link
+                  href={route("dashboard")}
+                  className="btn primary"
+                >
+                  Go to Dashboard
+                </Link>
+              )}
             </div>
           </div>
         </header>
@@ -114,12 +144,23 @@ const Landing = () => {
 
           <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-6">
             <TextInput placeholder="Full Name" value={data.patient_name} onChange={(e) => setData("patient_name", e.target.value)} required />
-            <TextInput type="number" placeholder="Age" value={data.age} onChange={(e) => setData("age", e.target.value)} required />
-            <TextInput placeholder="Contact Number" value={data.contact} onChange={(e) => setData("contact", e.target.value)} required />
-            <TextInput placeholder="Email Address" type="email" value={data.email} onChange={(e) => setData("email", e.target.value)} required />
-            <TextInput placeholder="Occupation" value={data.occupation} onChange={(e) => setData("occupation", e.target.value)} />
-            <TextInput placeholder="Address" value={data.address} onChange={(e) => setData("address", e.target.value)} />
-            <TextInput type="date" value={data.date_of_visit} onChange={(e) => setData("date_of_visit", e.target.value)} required />
+            <TextInput type="number" placeholder="Age" value={data.age || ""} onChange={(e) => setData("age", e.target.value)} required />
+            <TextInput placeholder="Contact Number" value={data.telephone || ""} onChange={(e) => setData("telephone", e.target.value)} required />
+            <TextInput placeholder="Email Address" type="email" value={data.email || ""} onChange={(e) => setData("email", e.target.value)} required />
+            <TextInput placeholder="Occupation" value={data.occupation || ""} onChange={(e) => setData("occupation", e.target.value)} />
+            <TextInput placeholder="Address" value={data.address || ""} onChange={(e) => setData("address", e.target.value)} />
+
+            {/* Date of Visit (datetime-local) */}
+            <div className="col-span-2">
+              <label className="block text-gray-700 font-medium mb-2">Date of Visit</label>
+              <input
+                type="datetime-local"
+                value={data.date_of_visit}
+                onChange={(e) => setData("date_of_visit", e.target.value)}
+                className="border rounded p-2 w-full"
+                required
+              />
+            </div>
 
             {/* Services checkboxes */}
             <div className="col-span-2">
