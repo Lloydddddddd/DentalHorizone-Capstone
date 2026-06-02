@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import GuestLayout from "../Layouts/GuestLayout";
 import "../../css/Landing.css";
 import { Link, usePage, useForm } from "@inertiajs/react";
@@ -10,7 +10,7 @@ import WhyChooseUs from "@/Components/WhyChooseUs";
 const Landing = () => {
   const { services, flash } = usePage().props;
 
-  const { data, setData, post, processing, reset } = useForm({
+  const { data, setData, post, processing, reset, errors } = useForm({
     patient_name: "",
     age: "",
     telephone: "",
@@ -22,6 +22,12 @@ const Landing = () => {
     complaint: "",
     note: "",
   });
+
+  useEffect(() => {
+    if (errors.date_of_visit) {
+      document.getElementById("date_of_visit")?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [errors]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -154,12 +160,16 @@ const Landing = () => {
             <div className="col-span-2">
               <label className="block text-gray-700 font-medium mb-2">Date of Visit</label>
               <input
+                id="date_of_visit"
                 type="datetime-local"
                 value={data.date_of_visit}
                 onChange={(e) => setData("date_of_visit", e.target.value)}
                 className="border rounded p-2 w-full"
                 required
               />
+              {errors.date_of_visit && (
+                <div className="text-red-600 text-sm mt-1">{errors.date_of_visit}</div>
+              )}
             </div>
 
             {/* Services checkboxes */}
