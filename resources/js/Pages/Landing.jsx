@@ -89,7 +89,7 @@ const Landing = () => {
               Welcome to Dental Horizon, where your comfort comes first.
               Our caring team and modern approach make dental visits simple, safe, and effective — helping you smile with confidence every day.
             </p>
-            <div className="hero-buttons">
+            <div className="hero-buttons flex gap-4">
               <button
                 onClick={() =>
                   document.getElementById("appointment-section").scrollIntoView({ behavior: "smooth" })
