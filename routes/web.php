@@ -16,7 +16,7 @@ Route::get('/', function () {
     return Inertia::render('Landing', [
         'services' => Service::all(),
     ]);
-});
+})->name('landing');
 
 // Public booking route (patients can book without login)
 Route::post('/appointments/public-store', [AppointmentController::class, 'publicStore'])->name('appointments.publicStore');
