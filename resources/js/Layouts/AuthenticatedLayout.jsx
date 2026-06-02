@@ -64,6 +64,10 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 </Dropdown.Link>
                                             )}
 
+                                            <Dropdown.Link href={route('landing')}>
+                                                Back to Landing
+                                            </Dropdown.Link>
+
                                             <Dropdown.Link
                                                 href={route('logout')}
                                                 method="post"
@@ -147,6 +151,10 @@ export default function AuthenticatedLayout({ header, children }) {
                                         Create New Account
                                     </ResponsiveNavLink>
                                 )}
+
+                                <Dropdown.Link href={route('landing')}>
+                                    Back to Landing
+                                </Dropdown.Link>
 
                                 <ResponsiveNavLink
                                     method="post"
