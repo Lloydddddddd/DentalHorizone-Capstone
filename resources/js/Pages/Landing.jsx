@@ -10,6 +10,9 @@ import WhyChooseUs from "@/Components/WhyChooseUs";
 const Landing = () => {
   const { services, flash } = usePage().props;
 
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [submittedData, setSubmittedData] = useState(null);
+
   const { data, setData, post, processing, reset, errors } = useForm({
     patient_name: "",
     age: "",
@@ -33,7 +36,9 @@ const Landing = () => {
     e.preventDefault();
     post(route("appointments.publicStore"), {
       onSuccess: () => {
-        reset(); // clears all fields after successful booking
+        setSubmittedData(data);   // keep a copy of what was submitted
+        setShowReceipt(true);     // show the receipt modal
+        reset();
         setData("services", []);
       },
     });
@@ -207,9 +212,66 @@ const Landing = () => {
             </div>
           </form>
         </section>
-      </div>
-    </GuestLayout>
-  );
-};
+
+                  {/* Receipt Modal */}
+          {showReceipt && submittedData && (
+            <div className="bg-gray fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+              <div className="bg-gradient-to-br from-blue-50 to-white rounded-lg shadow-xl p-6 max-w-lg w-full border border-orange-400">
+                {/* Header with border accent */}
+                <h2 className="text-2xl font-bold text-blue-900 mb-6 pb-2 border-b-2 border-orange-500">
+                  Appointment Receipt
+                </h2>
+
+                <p className="text-sm text-gray-700 mb-6 font-medium">
+                  📌 This receipt is issued once only. Please screenshot now as proof of your appointment.
+
+                </p>
+
+                {/* Details */}
+                <div className="space-y-2 text-sm text-gray-900">
+                  <p><strong>Name:</strong> {submittedData.patient_name}</p>
+                  <p><strong>Age:</strong> {submittedData.age}</p>
+                  <p><strong>Contact:</strong> {submittedData.telephone}</p>
+                  <p><strong>Email:</strong> {submittedData.email}</p>
+                  <p><strong>Occupation:</strong> {submittedData.occupation}</p>
+                  <p><strong>Address:</strong> {submittedData.address}</p>
+                  <p><strong>Date of Visit:</strong> {submittedData.date_of_visit}</p>
+                  <p>
+                    <strong>Services:</strong>{" "}
+                    {services
+                      .filter(s => submittedData.services.includes(String(s.id)))
+                      .map(s => s.name)
+                      .join(", ")}
+                  </p>
+                  {submittedData.complaint && (
+                    <p><strong>Complaint:</strong> {submittedData.complaint}</p>
+                  )}
+                  {submittedData.note && (
+                    <p><strong>Note:</strong> {submittedData.note}</p>
+                  )}
+                </div>
+
+                {/* Footer with Close button */}
+                <div className="mt-6 flex justify-end">
+                  <button
+                    onClick={() => setShowReceipt(false)}
+                    className="px-5 py-2 bg-blue-600 text-white font-semibold rounded-md shadow hover:bg-blue-900 transition">
+                    Close
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          )}
+
+
+
+
+
+
+                      </div>
+                    </GuestLayout>
+                  );
+                };
 
 export default Landing;
