@@ -13,6 +13,21 @@ class Patient extends Model
         'age',
         'occupation',
         'email',
+        'complaint',
+        'date_of_visit',
+        'next_appointment',
+        'service',
+        'visit_status',
+        'status',
+        'patient_status',
+        'debit',
+        'credit',
+        'balance',
+    ];
+
+    protected $attributes = [
+        'patient_status' => 'Active',
+        'status' => 'active',
     ];
 
     public function visitHistories()

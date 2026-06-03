@@ -249,6 +249,21 @@ export default function Index({ patients, totalPatients }) {
                     </div>
                 </Modal>
 
+                <Modal show={showEditModal} onClose={closeEditModal}>
+                    <div className="p-6">
+                        <h3 className="text-lg font-medium">Edit Patient</h3>
+                        <div className="mt-4">
+                            <InlineForm
+                                patient={editingPatient}
+                                onSuccess={() => {
+                                    closeEditModal();
+                                    router.reload();
+                                }}
+                            />
+                        </div>
+                    </div>
+                </Modal>
+
                 {showApptModal && (
                     <AddAppointmentPopup
                         patient={apptPatient}
