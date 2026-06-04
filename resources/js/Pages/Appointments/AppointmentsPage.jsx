@@ -4,6 +4,7 @@ import { Head, Link, router } from '@inertiajs/react';
 import dayjs from 'dayjs';
 import SearchFilter from '@/Components/SearchFilter';
 import AppointmentsTable from '@/Pages/Appointments/AppointmentsTable';
+import StatusFilter from "@/Components/StatusFilter";
 
 export default function AppointmentsPage({ appointments, filters, title, routeName }) {
     const safeFilters = filters || {};
@@ -33,25 +34,29 @@ export default function AppointmentsPage({ appointments, filters, title, routeNa
 
     // Mapping logic
     const mappedAppointments = appointments.data.map((appointment) => ({
-        date_of_visit: dayjs(appointment.date_of_visit).format('MMM D, YYYY h:mm A'),
+        id: appointment.id,
+        // formatted for table
+        date_of_visit: appointment.date_of_visit
+        ? dayjs(appointment.date_of_visit).format('MMM D, YYYY h:mm A')
+        : '–',
         next_appointment: appointment.next_appointment
             ? dayjs(appointment.next_appointment).format('MMM D, YYYY h:mm A')
             : '–',
+        // raw values for editing (normalized for datetime-local)
+        raw_date_of_visit: appointment.date_of_visit
+            ? dayjs(appointment.date_of_visit).format('YYYY-MM-DDTHH:mm')
+            : "",
+        raw_next_appointment: appointment.next_appointment
+            ? dayjs(appointment.next_appointment).format('YYYY-MM-DDTHH:mm')
+            : null,
         patient_name: appointment.patient?.patient_name || '–',
         complaint: truncateComplaint(appointment.complaint),
         fullComplaint: appointment.complaint,
-        service: appointment.services && appointment.services.length > 0
-            ? truncateServices(
-                appointment.services
-                  .map(s => `${s.name}${s.pivot?.note ? ` (${s.pivot.note})` : ''}`)
-                  .join(', ')
-              )
-            : '–',
-        fullService: appointment.services && appointment.services.length > 0
-            ? appointment.services
-                .map(s => `${s.name}${s.pivot?.note ? ` (${s.pivot.note})` : ''}`)
-                .join(', ')
-            : '–',
+        service: truncateServices(
+            appointment.services?.map(s => `${s.name}${s.pivot?.note ? ` (${s.pivot.note})` : ''}`).join(', ')
+        ),
+        fullService: appointment.services?.map(s => `${s.name}${s.pivot?.note ? ` (${s.pivot.note})` : ''}`).join(', '),
+        raw_services: appointment.services || [],
         visit_status: appointment.visit_status,
         balance: appointment.balance,
         debit: appointment.debit,
@@ -70,6 +75,18 @@ export default function AppointmentsPage({ appointments, filters, title, routeNa
                 <SearchFilter
                     searchValue={safeFilters.search}
                     onSearchChange={handleSearchChange}
+                />
+
+                <StatusFilter
+                    value={safeFilters.status}
+                    onChange={(status) =>
+                    router.get(route(routeName), {
+                        search: safeFilters.search,
+                        status,
+                        sort: safeFilters.sort,
+                        direction: safeFilters.direction,
+                    }, { preserveState: true, replace: true })
+                    }
                 />
 
                 <AppointmentsTable appointments={mappedAppointments} />
