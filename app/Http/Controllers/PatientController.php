@@ -27,10 +27,6 @@ class PatientController extends Controller
             });
         }
 
-        if ($status = $request->input('status')) {
-            $query->where('patient_status', $status);
-        }
-
         $patients = $query->paginate(20)->withQueryString();
 
         // Total unfiltered count — kept in sync with what DashboardController reports
@@ -56,18 +52,8 @@ class PatientController extends Controller
             'email' => 'nullable|email|max:150',
         ]);
 
-        $data['patient_status'] = 'Active';
-
-        $data = array_merge([
-            'complaint' => '',
-            'date_of_visit' => now(),
-            'next_appointment' => null,
-            'service' => '',
-            'visit_status' => 'none',
-            'status' => 'active',
-            'debit' => 0,
-            'credit' => 0,
-        ], $data);
+        // Normalize optional age values so they write cleanly to the database.
+        $data['age'] = $data['age'] === '' ? 0 : $data['age'];
 
         Patient::create($data);
 
@@ -122,8 +108,7 @@ class PatientController extends Controller
             'email' => 'nullable|email|max:150',
         ]);
 
-        // Status should always remain Active unless managed through archive/restore.
-        $data['patient_status'] = 'Active';
+        $data['age'] = $data['age'] === '' ? 0 : $data['age'];
 
         $patient->update($data);
 

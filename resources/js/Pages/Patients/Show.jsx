@@ -16,7 +16,7 @@ export default function Show({ patient }) {
                 <div className="mb-4"><strong>Contact:</strong> {patient.telephone}</div>
                 <div className="mb-4"><strong>Email:</strong> {patient.email}</div>
                 <div className="mb-4"><strong>Address:</strong> {patient.address}</div>
-                <div className="mb-4"><strong>Patient Status:</strong> {patient.patient_status}</div>
+                <div className="mb-4"><strong>Patient Status:</strong> Active</div>
             </div>
         </AuthenticatedLayout>
     );

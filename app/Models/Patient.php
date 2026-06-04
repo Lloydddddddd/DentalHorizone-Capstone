@@ -10,25 +10,13 @@ class Patient extends Model
         'patient_name',
         'address',
         'telephone',
+        'email',
         'age',
         'occupation',
-        'email',
-        'complaint',
-        'date_of_visit',
-        'next_appointment',
-        'service',
-        'visit_status',
-        'status',
-        'patient_status',
-        'debit',
-        'credit',
-        'balance',
     ];
 
-    protected $attributes = [
-        'patient_status' => 'Active',
-        'status' => 'active',
-    ];
+    // The patients table only stores the basic profile fields currently available in the database.
+
 
     public function visitHistories()
     {
