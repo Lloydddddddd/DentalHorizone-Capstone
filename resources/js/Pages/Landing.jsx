@@ -17,15 +17,15 @@ const Landing = () => {
     email: "",
     occupation: "",
     address: "",
-    date_of_visit: "",
+    next_appointment: "",
     services: [],
     complaint: "",
     note: "",
   });
 
   useEffect(() => {
-    if (errors.date_of_visit) {
-      document.getElementById("date_of_visit")?.scrollIntoView({ behavior: "smooth" });
+    if (errors.next_appointment) {
+      document.getElementById("next_appointment")?.scrollIntoView({ behavior: "smooth" });
     }
   }, [errors]);
 
@@ -60,25 +60,6 @@ const Landing = () => {
           <ul className="nav-links flex items-center gap-6">
             
           </ul>
-          <div className="nav-actions">
-              {usePage().props.auth?.user ? (
-                <Link
-                  href={route("logout")}
-                  method="post"
-                  as="button"
-                  className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
-                >
-                  Logout
-                </Link>
-              ) : (
-                <Link
-                  href={route("login")}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
-                >
-                  Login
-                </Link>
-              )}
-          </div>
         </nav>
 
         {/* Hero */}
@@ -158,17 +139,17 @@ const Landing = () => {
 
             {/* Date of Visit (datetime-local) */}
             <div className="col-span-2">
-              <label className="block text-gray-700 font-medium mb-2">Date of Visit</label>
+              <label className="block text-gray-700 font-medium mb-2">Preferred Appointment Date</label>
               <input
-                id="date_of_visit"
+                id="next_appointment"
                 type="datetime-local"
-                value={data.date_of_visit}
-                onChange={(e) => setData("date_of_visit", e.target.value)}
+                value={data.next_appointment}
+                onChange={(e) => setData("next_appointment", e.target.value)}
                 className="border rounded p-2 w-full"
                 required
               />
-              {errors.date_of_visit && (
-                <div className="text-red-600 text-sm mt-1">{errors.date_of_visit}</div>
+              {errors.next_appointment && (
+                <div className="text-red-600 text-sm mt-1">{errors.next_appointment}</div>
               )}
             </div>
 
