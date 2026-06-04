@@ -46,22 +46,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Other Resources
     Route::resource('visit-histories', PatientVisitHistoryController::class);
-    Route::resource('appointments', AppointmentController::class);
-
+    
     //JSON endpoint for services
     Route::get('/services/list', [ServiceController::class, 'list'])->name('services.list');
     // ✅ Dental Services
     Route::resource('services', ServiceController::class);
-
+    
     // Page Routes
     Route::get('/patients', [PatientController::class, 'index'])->name('patients.index');
 
-    // Appointments
-    Route::get('/appointments', [AppointmentController::class, 'index'])->name('appointments.index');
-
+    // Appointments main table
+    Route::resource('appointments', AppointmentController::class);
+    
     // Upcoming & Missed Appointments
     Route::get('/Appointments/Upcoming', [AppointmentController::class, 'upcoming'])->name('appointments.upcoming');
     Route::get('/Appointments/Missed', [AppointmentController::class, 'missed'])->name('appointments.missed');
+
+    // Reschedule & Cancel
+    Route::put('/appointments/{id}/reschedule', [AppointmentController::class, 'reschedule'])->name('appointments.reschedule');
+    Route::put('/appointments/{id}/cancel', [AppointmentController::class, 'cancel'])->name('appointments.cancel');
 
     Route::get('/payments', fn () => Inertia::render('Payments/Index'))->name('payments.index');
     Route::get('/reports', fn () => Inertia::render('Reports/Index'))->name('reports.index');
