@@ -1,10 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, usePage } from '@inertiajs/react';
 
 export default function Sidebar() {
     const { url } = usePage();
+    const activeUrl = url.toLowerCase();
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [appointmentsOpen, setAppointmentsOpen] = useState(false);
+
+    useEffect(() => {
+        if (activeUrl.startsWith('/appointments')) {
+            setAppointmentsOpen(true);
+        }
+    }, [activeUrl]);
 
     const sidebarItems = [
         { label: 'Dashboard', href: '/dashboard' },
@@ -36,7 +43,7 @@ export default function Sidebar() {
                     </div>
                     {sidebarOpen && (
                         <span className="font-bold text-lg text-gray-800 truncate">
-                            Dental Horizon
+                            Dental Horizone
                         </span>
                     )}
                 </div>
@@ -60,7 +67,7 @@ export default function Sidebar() {
                                     type="button"
                                     onClick={() => setAppointmentsOpen((prev) => !prev)}
                                     className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                        url.startsWith('/appointments')
+                                        activeUrl.startsWith('/appointments')
                                             ? 'bg-primary text-white'
                                             : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                                     } ${sidebarOpen ? '' : 'justify-center'}`}
@@ -78,7 +85,7 @@ export default function Sidebar() {
                                 {appointmentsOpen && sidebarOpen && (
                                     <div className="ml-6 flex flex-col gap-1">
                                         {item.children.map((child) => {
-                                            const active = url && (url === child.href || url.startsWith(child.href));
+                                            const active = activeUrl === child.href.toLowerCase();
                                             return (
                                                 <Link
                                                     key={child.href}
@@ -100,7 +107,7 @@ export default function Sidebar() {
                     }
 
                     // Single links
-                    const active = url && url.startsWith(item.href);
+                    const active = activeUrl.startsWith(item.href.toLowerCase());
                     return (
                         <Link
                             key={item.href}
