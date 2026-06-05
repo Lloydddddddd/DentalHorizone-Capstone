@@ -11,6 +11,7 @@ export default function ArchivedIndex({ archivedPatients }) {
 
     // Search State
     const [search, setSearch] = useState(props?.q || "");
+    const [sort, setSort] = useState(props?.sort || "name");
 
     const [showRestoreModal, setShowRestoreModal] = useState(false);
     const [selected, setSelected] = useState(null);
@@ -20,7 +21,7 @@ export default function ArchivedIndex({ archivedPatients }) {
         const handler = setTimeout(() => {
             router.get(
                 route("archived-patients.index"),
-                { q: search || undefined },
+                { q: search || undefined, sort: sort || undefined },
                 {
                     preserveState: true,
                     replace: true,
@@ -31,6 +32,20 @@ export default function ArchivedIndex({ archivedPatients }) {
 
         return () => clearTimeout(handler);
     }, [search]);
+
+    const handleSortChange = (event) => {
+        const value = event.target.value;
+        setSort(value);
+        router.get(
+            route("archived-patients.index"),
+            { q: search || undefined, sort: value || undefined },
+            {
+                preserveState: true,
+                replace: true,
+                only: ["archivedPatients", "flash"],
+            }
+        );
+    };
 
     return (
         <AuthenticatedLayout header={<h2 className="text-xl font-semibold">Patients</h2>}>
@@ -70,6 +85,15 @@ export default function ArchivedIndex({ archivedPatients }) {
                                 searchValue={search}
                                 onSearchChange={(e) => setSearch(e.target.value)}
                             />
+                            <select
+                                value={sort}
+                                onChange={handleSortChange}
+                                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"
+                            >
+                                <option value="name">Name (A–Z)</option>
+                                <option value="name_desc">Name (Z–A)</option>
+                                <option value="date">Date Added</option>
+                            </select>
                             <button
                                 type="submit"
                                 className="rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 transition"

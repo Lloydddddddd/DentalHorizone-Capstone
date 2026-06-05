@@ -27,13 +27,14 @@ export default function Index({ patients, totalPatients }) {
 
     // Search functionality
     const [search, setSearch] = useState(props?.q || "");
+    const [sort, setSort] = useState(props?.sort || "name");
 
     // Debounced search
     useEffect(() => {
         const handler = setTimeout(() => {
             router.get(
                 route("patients.index"),
-                { q: search || undefined },
+                { q: search || undefined, sort: sort || undefined },
                 {
                     preserveState: true,
                     replace: true,
@@ -44,6 +45,20 @@ export default function Index({ patients, totalPatients }) {
 
         return () => clearTimeout(handler);
     }, [search]);
+
+    const handleSortChange = (event) => {
+        const value = event.target.value;
+        setSort(value);
+        router.get(
+            route("patients.index"),
+            { q: search || undefined, sort: value || undefined },
+            {
+                preserveState: true,
+                replace: true,
+                only: ["patients", "flash"],
+            },
+        );
+    };
 
     const openEditModal = (patient) => {
         setEditingPatient(patient);
@@ -102,6 +117,15 @@ export default function Index({ patients, totalPatients }) {
                                 searchValue={search}
                                 onSearchChange={(e) => setSearch(e.target.value)}
                             />
+                            <select
+                                value={sort}
+                                onChange={handleSortChange}
+                                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"
+                            >
+                                <option value="name">Name (A–Z)</option>
+                                <option value="name_desc">Name (Z–A)</option>
+                                <option value="date">Date Added</option>
+                            </select>
                             <button
                                 type="submit"
                                 className="rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 transition"

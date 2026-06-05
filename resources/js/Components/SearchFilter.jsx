@@ -6,9 +6,9 @@ export default function SearchFilter({ searchValue, onSearchChange }) {
       <input
         type="text"
         placeholder="Search by patient name..."
-        defaultValue={searchValue || ''}
+        value={searchValue || ''}
         onChange={onSearchChange}
-        className="border rounded px-3 py-2 w-1/2"
+        className="border rounded px-3 py-2 w-full"
       />
     </div>
   );
