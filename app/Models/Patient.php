@@ -10,10 +10,13 @@ class Patient extends Model
         'patient_name',
         'address',
         'telephone',
+        'email',
         'age',
         'occupation',
-        'email',
     ];
+
+    // The patients table only stores the basic profile fields currently available in the database.
+
 
     public function visitHistories()
     {

@@ -27,10 +27,6 @@ class PatientController extends Controller
             });
         }
 
-        if ($status = $request->input('status')) {
-            $query->where('patient_status', $status);
-        }
-
         $patients = $query->paginate(20)->withQueryString();
 
         // Total unfiltered count — kept in sync with what DashboardController reports
@@ -54,23 +50,10 @@ class PatientController extends Controller
             'telephone' => 'nullable|string|max:50',
             'address' => 'nullable|string|max:200',
             'email' => 'nullable|email|max:150',
-            'patient_status' => 'nullable|string|in:Active,Inactive',
         ]);
 
-        if (empty($data['patient_status'])) {
-            $data['patient_status'] = 'Active';
-        }
-
-        $data = array_merge([
-            'complaint' => '',
-            'date_of_visit' => now(),
-            'next_appointment' => null,
-            'service' => '',
-            'visit_status' => 'none',
-            'status' => 'active',
-            'debit' => 0,
-            'credit' => 0,
-        ], $data);
+        // Normalize optional age values so they write cleanly to the database.
+        $data['age'] = $data['age'] === '' ? 0 : $data['age'];
 
         Patient::create($data);
 
@@ -123,13 +106,9 @@ class PatientController extends Controller
             'telephone' => 'nullable|string|max:50',
             'address' => 'nullable|string|max:200',
             'email' => 'nullable|email|max:150',
-            'patient_status' => 'nullable|string|in:Active,Inactive',
         ]);
 
-        $desiredStatus = $data['patient_status'] ?? 'Active';
-        if ($desiredStatus === 'Inactive' && $patient->visitHistories()->exists()) {
-            $data['patient_status'] = 'Active';
-        }
+        $data['age'] = $data['age'] === '' ? 0 : $data['age'];
 
         $patient->update($data);
 
@@ -156,17 +135,17 @@ class PatientController extends Controller
         // Copy patient data into archived_patients table
         DB::table('archived_patients')->insert([
             'patient_name' => $patient->patient_name,
-            'address' => $patient->address,
-            'telephone' => $patient->telephone,
-            'age' => $patient->age,
-            'occupation' => $patient->occupation,
-            'complaint' => $patient->complaint,
-            'date_of_visit' => $patient->date_of_visit,
+            'address' => $patient->address ?? '',
+            'telephone' => $patient->telephone ?? '',
+            'age' => $patient->age ?? 0,
+            'occupation' => $patient->occupation ?? '',
+            'complaint' => $patient->complaint ?? '',
+            'date_of_visit' => $patient->date_of_visit ?? now(),
             'next_appointment' => $patient->next_appointment,
-            'service' => $patient->service,
-            'patient_status' => $patient->patient_status,
-            'visit_status' => $patient->visit_status,
-            'status' => $patient->status,
+            'service' => $patient->service ?? '',
+            'patient_status' => 'Inactive',
+            'visit_status' => $patient->visit_status ?? 'none',
+            'status' => 'inactive',
             'email' => $patient->email ?? null,
             'debit' => $patient->debit ?? 0,
             'credit' => $patient->credit ?? 0,
@@ -209,9 +188,9 @@ class PatientController extends Controller
             'date_of_visit' => $arch->date_of_visit ?? now(),
             'next_appointment' => $arch->next_appointment,
             'service' => $arch->service,
-            'patient_status' => $arch->patient_status ?? 'Active',
+            'patient_status' => 'Active',
             'visit_status' => $arch->visit_status ?? 'none',
-            'status' => $arch->status ?? 'active',
+            'status' => 'active',
             'debit' => $arch->debit ?? 0,
             'credit' => $arch->credit ?? 0,
             'email' => $arch->email ?? null,

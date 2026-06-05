@@ -1,15 +1,18 @@
-import React, { useEffect, useState } from 'react';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, usePage, router } from '@inertiajs/react';
-import Modal from '@/Components/Modal';
-import InlineForm from '@/Pages/Patients/InlineForm';
-import AddAppointmentPopup from '@/Components/AddAppointmentPopup';
+import React, { useEffect, useState } from "react";
+import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import { Head, Link, usePage, router } from "@inertiajs/react";
+import Modal from "@/Components/Modal";
+import InlineForm from "@/Pages/Patients/InlineForm";
+import AddAppointmentPopup from "@/Components/AddAppointmentPopup";
 
 export default function Index({ patients, totalPatients }) {
     const { props } = usePage();
     const patientsData = patients && patients.data ? patients.data : [];
     const csrfToken =
-        props?.csrfToken || document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        props?.csrfToken ||
+        document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute("content");
 
     const [showArchiveModal, setShowArchiveModal] = useState(false);
     const [selectedPatient, setSelectedPatient] = useState(null);
@@ -21,28 +24,24 @@ export default function Index({ patients, totalPatients }) {
     const [showApptModal, setShowApptModal] = useState(false);
     const [apptPatient, setApptPatient] = useState(null);
 
-    // Debounced search (from HEAD merge base)
-    const [search, setSearch] = useState('');
-    const [statusFilter, setStatusFilter] = useState('');
+    // Debounced search
+    const [search, setSearch] = useState("");
 
     useEffect(() => {
         const handler = setTimeout(() => {
             router.get(
-                route('patients.index'),
-                {
-                    q: search || undefined,
-                    status: statusFilter || undefined,
-                },
+                route("patients.index"),
+                { q: search || undefined },
                 {
                     preserveState: true,
                     replace: true,
-                    only: ['patients', 'flash'],
-                }
+                    only: ["patients", "flash"],
+                },
             );
         }, 500);
 
         return () => clearTimeout(handler);
-    }, [search, statusFilter]);
+    }, [search]);
 
     const openEditModal = (patient) => {
         setEditingPatient(patient);
@@ -55,31 +54,35 @@ export default function Index({ patients, totalPatients }) {
     };
 
     return (
-        <AuthenticatedLayout header={
-            <div className="flex items-center gap-3">
-                <h2 className="text-xl font-semibold">Patients</h2>
-                <span className="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">
-                    {totalPatients ?? 0} total
-                </span>
-            </div>
-        }>
+        <AuthenticatedLayout
+            header={
+                <div className="flex items-center gap-3">
+                    <h2 className="text-xl font-semibold">Patients</h2>
+                    <span className="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">
+                        {totalPatients ?? 0} total
+                    </span>
+                </div>
+            }
+        >
             <Head title="Patients" />
 
             <div className="p-6">
                 {props?.flash?.success && (
-                    <div className="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-800">{props.flash.success}</div>
+                    <div className="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-800">
+                        {props.flash.success}
+                    </div>
                 )}
 
                 {/* Navigation Tabs */}
                 <div className="flex border-b border-gray-200 mb-6">
                     <Link
-                        href={route('patients.index')}
+                        href={route("patients.index")}
                         className="px-6 py-3 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600 -mb-px"
                     >
                         Active Patients
                     </Link>
                     <Link
-                        href={route('archived-patients.index')}
+                        href={route("archived-patients.index")}
                         className="px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 -mb-px"
                     >
                         Archived Patients
@@ -102,15 +105,6 @@ export default function Index({ patients, totalPatients }) {
                                 placeholder="Search name, phone, email or occupation"
                                 className="w-full rounded-md border px-3 py-2 text-sm placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500"
                             />
-                            <select
-                                value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
-                                className="rounded-md border px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
-                            >
-                                <option value="">All Status</option>
-                                <option value="Active">Active</option>
-                                <option value="Inactive">Inactive</option>
-                            </select>
                             <button
                                 type="submit"
                                 className="rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 transition"
@@ -133,12 +127,24 @@ export default function Index({ patients, totalPatients }) {
                     <table className="min-w-full table-auto divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Name</th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Age</th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Occupation</th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Contact</th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Email</th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Status</th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                                    Name
+                                </th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                                    Age
+                                </th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                                    Occupation
+                                </th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                                    Contact
+                                </th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                                    Email
+                                </th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                                    Status
+                                </th>
                                 <th className="px-4 py-2" />
                             </tr>
                         </thead>
@@ -155,22 +161,29 @@ export default function Index({ patients, totalPatients }) {
                             )}
 
                             {patientsData.map((p) => (
-                                <tr key={p.id} className="hover:bg-gray-50 transition">
-                                    <td className="px-4 py-3 text-sm font-medium">{p.patient_name}</td>
-                                    <td className="px-4 py-3 text-sm">{p.age}</td>
-                                    <td className="px-4 py-3 text-sm">{p.occupation || '-'}</td>
-                                    <td className="px-4 py-3 text-sm">{p.telephone}</td>
-                                    <td className="px-4 py-3 text-sm">{p.email}</td>
+                                <tr
+                                    key={p.id}
+                                    className="hover:bg-gray-50 transition"
+                                >
+                                    <td className="px-4 py-3 text-sm font-medium">
+                                        {p.patient_name}
+                                    </td>
                                     <td className="px-4 py-3 text-sm">
-                                        {p.patient_status === 'Active' ? (
-                                            <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
-                                                Active
-                                            </span>
-                                        ) : (
-                                            <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-800">
-                                                Inactive
-                                            </span>
-                                        )}
+                                        {p.age}
+                                    </td>
+                                    <td className="px-4 py-3 text-sm">
+                                        {p.occupation || "-"}
+                                    </td>
+                                    <td className="px-4 py-3 text-sm">
+                                        {p.telephone}
+                                    </td>
+                                    <td className="px-4 py-3 text-sm">
+                                        {p.email}
+                                    </td>
+                                    <td className="px-4 py-3 text-sm">
+                                        <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
+                                            Active
+                                        </span>
                                     </td>
                                     <td className="px-4 py-3 text-sm text-right space-x-4">
                                         <button
@@ -204,11 +217,16 @@ export default function Index({ patients, totalPatients }) {
                     </table>
                 </div>
 
-                <Modal show={showArchiveModal} onClose={() => setShowArchiveModal(false)}>
+                <Modal
+                    show={showArchiveModal}
+                    onClose={() => setShowArchiveModal(false)}
+                >
                     <div className="p-6">
                         <h3 className="text-lg font-medium">Archive patient</h3>
                         <p className="mt-2 text-sm text-gray-600">
-                            Are you sure you want to archive <strong>{selectedPatient?.patient_name}</strong>? This will move the patient to Archived Patients.
+                            Are you sure you want to archive{" "}
+                            <strong>{selectedPatient?.patient_name}</strong>?
+                            This will move the patient to Archived Patients.
                         </p>
 
                         <div className="mt-4 flex justify-end space-x-3">
@@ -222,11 +240,18 @@ export default function Index({ patients, totalPatients }) {
                                 method="POST"
                                 action={
                                     selectedPatient
-                                        ? route('patients.archive', selectedPatient.id)
-                                        : '#'
+                                        ? route(
+                                              "patients.archive",
+                                              selectedPatient.id,
+                                          )
+                                        : "#"
                                 }
                             >
-                                <input type="hidden" name="_token" value={csrfToken} />
+                                <input
+                                    type="hidden"
+                                    name="_token"
+                                    value={csrfToken}
+                                />
                                 <button className="rounded-md bg-red-600 px-4 py-2 text-white">
                                     Archive
                                 </button>
@@ -235,13 +260,31 @@ export default function Index({ patients, totalPatients }) {
                     </div>
                 </Modal>
 
-                <Modal show={showAddModal} onClose={() => setShowAddModal(false)}>
+                <Modal
+                    show={showAddModal}
+                    onClose={() => setShowAddModal(false)}
+                >
                     <div className="p-6">
                         <h3 className="text-lg font-medium">Add Patient</h3>
                         <div className="mt-4">
                             <InlineForm
                                 onSuccess={() => {
                                     setShowAddModal(false);
+                                    router.reload();
+                                }}
+                            />
+                        </div>
+                    </div>
+                </Modal>
+
+                <Modal show={showEditModal} onClose={closeEditModal}>
+                    <div className="p-6">
+                        <h3 className="text-lg font-medium">Edit Patient</h3>
+                        <div className="mt-4">
+                            <InlineForm
+                                patient={editingPatient}
+                                onSuccess={() => {
+                                    closeEditModal();
                                     router.reload();
                                 }}
                             />
@@ -258,7 +301,9 @@ export default function Index({ patients, totalPatients }) {
                 )}
 
                 <div className="mt-4 text-sm text-gray-600">
-                    {patients?.meta ? `Page ${patients.meta.current_page} of ${patients.meta.last_page}` : ''}
+                    {patients?.meta
+                        ? `Page ${patients.meta.current_page} of ${patients.meta.last_page}`
+                        : ""}
                 </div>
 
                 {/* Edit modal placeholder removed (kept HEAD behavior: controller-based edit exists elsewhere) */}
@@ -266,4 +311,3 @@ export default function Index({ patients, totalPatients }) {
         </AuthenticatedLayout>
     );
 }
-

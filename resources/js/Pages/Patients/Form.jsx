@@ -15,7 +15,6 @@ export default function Form({ patient, onSuccess = null }) {
         telephone: patient?.telephone || '',
         address: patient?.address || '',
         email: patient?.email || '',
-        patient_status: patient?.patient_status || 'Active',
     });
 
     function submit(e) {
@@ -74,15 +73,6 @@ export default function Form({ patient, onSuccess = null }) {
                     <InputLabel>Address</InputLabel>
                     <TextInput value={data.address} onChange={(e) => setData('address', e.target.value)} className="mt-1 w-full" />
                     <InputError message={errors.address} />
-                </div>
-
-                <div>
-                    <InputLabel>Patient Status</InputLabel>
-                    <select value={data.patient_status} onChange={(e) => setData('patient_status', e.target.value)} className="mt-1 rounded-md border-gray-300">
-                        <option value="Active">Active</option>
-                        <option value="Inactive">Inactive</option>
-                    </select>
-                    <InputError message={errors.patient_status} />
                 </div>
 
                 <div className="mt-4">
