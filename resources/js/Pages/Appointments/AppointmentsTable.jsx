@@ -1,4 +1,34 @@
+import React, { useState, useEffect } from "react";
+import { router } from "@inertiajs/react";
+import axios from "axios";
+import AppointmentsTableViewButtonModal from "@/Pages/Appointments/Components/AppointmentsTableViewModal";
+import AppointmentsTableRescheduleButton from "@/Pages/Appointments/Components/AppointmentsTableRescheduleModal";
+import AddAppointmentPopup from "@/Components/AddAppointmentPopup";
+
 export default function AppointmentsTable({ appointments }) {
+  const [selectedAppointment, setSelectedAppointment] = useState(null);
+
+  useEffect(() => {
+    const handleEsc = (e) => {
+      if (e.key === "Escape") setSelectedAppointment(null);
+    };
+    window.addEventListener("keydown", handleEsc);
+    return () => window.removeEventListener("keydown", handleEsc);
+  }, []);
+
+  const handleCancel = async (id) => {
+    console.log("Cancelling appointment ID:", id); // Debug
+    if (!confirm("Are you sure you want to cancel this appointment?")) return;
+
+    try {
+      await axios.put(`/appointments/${id}/cancel`);
+      window.location.reload();
+    } catch (error) {
+      console.error("Error cancelling appointment:", error);
+      alert("Failed to cancel appointment. Please try again.");
+    }
+  };
+
   return (
     <div className="overflow-x-auto">
       <table className="min-w-full table-auto divide-y divide-gray-200">
@@ -14,50 +44,74 @@ export default function AppointmentsTable({ appointments }) {
             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Debit</th>
             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Credit</th>
             <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Note</th>
+            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Actions</th>
           </tr>
         </thead>
         <tbody className="bg-white divide-y divide-gray-100">
           {appointments.length === 0 && (
             <tr>
-              <td
-                colSpan={10}
-                className="px-6 py-4 text-center text-sm text-gray-500"
-              >
+              <td colSpan={10} className="px-6 py-4 text-center text-sm text-gray-500">
                 No appointments found.
               </td>
             </tr>
           )}
 
-          {appointments.map((appt, idx) => (
-            <tr key={idx} className="hover:bg-gray-50 transition">
-              <td className="px-4 py-3 text-sm">{appt.date_of_visit}</td>
-              <td className="px-4 py-3 text-sm">{appt.next_appointment || "–"}</td>
-              <td className="px-4 py-3 text-sm font-medium">{appt.patient_name}</td>
-              <td className="px-4 py-3 text-sm" title={appt.fullComplaint}>{appt.complaint}</td>
-              <td className="px-4 py-3 text-sm" title={appt.fullService}>{appt.service}</td>
-              <td className="px-4 py-3 text-sm capitalize">
-                {appt.visit_status === "completed" ? (
-                  <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
-                    Completed
-                  </span>
-                ) : appt.visit_status === "pending" ? (
-                  <span className="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-800">
-                    Pending
-                  </span>
-                ) : (
-                  <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-800">
-                    {appt.visit_status}
-                  </span>
+          {appointments.map((appointment) => (
+            <tr key={appointment.id} className="hover:bg-gray-50 transition">
+              <td className="px-4 py-3 text-sm">{appointment.date_of_visit}</td>
+              <td className="px-4 py-3 text-sm">{appointment.next_appointment || "–"}</td>
+              <td className="px-4 py-3 text-sm font-medium">{appointment.patient_name}</td>
+              <td className="px-4 py-3 text-sm" title={appointment.fullComplaint}>{appointment.complaint}</td>
+              <td className="px-4 py-3 text-sm" title={appointment.fullService}>{appointment.service}</td>
+              <td className="px-4 py-3 text-sm capitalize">{appointment.visit_status}</td>
+              <td className="px-4 py-3 text-sm">{appointment.balance}</td>
+              <td className="px-4 py-3 text-sm">{appointment.debit}</td>
+              <td className="px-4 py-3 text-sm">{appointment.credit}</td>
+              <td className="px-4 py-3 text-sm" title={appointment.fullNote}>{appointment.note || "–"}</td>
+              <td className="px-4 py-3 text-sm space-x-2">
+                <AppointmentsTableViewButtonModal appointment={appointment} />
+                <AppointmentsTableRescheduleButton appointment={appointment} />
+                {appointment.visit_status !== "cancelled" && (
+                  <button
+                    onClick={() => handleCancel(appointment.id)}
+                    className="bg-red-500 text-white px-3 py-1 rounded text-xs"
+                  >
+                    Cancel
+                  </button>
                 )}
+                <button
+                  onClick={() =>
+                    setSelectedAppointment({
+                      mode: "edit",
+                      data: {
+                        ...appointment,
+                        complaint: appointment.fullComplaint,
+                        service: appointment.fullService,
+                        note: appointment.fullNote,
+                        services: appointment.raw_services,
+                        date_of_visit: appointment.raw_date_of_visit || "",
+                        next_appointment: appointment.raw_next_appointment,
+                      },
+                    })
+                  }
+                  className="bg-yellow-500 text-white px-3 py-1 rounded text-xs"
+                >
+                  Edit
+                </button>
               </td>
-              <td className="px-4 py-3 text-sm">{appt.balance}</td>
-              <td className="px-4 py-3 text-sm">{appt.debit}</td>
-              <td className="px-4 py-3 text-sm">{appt.credit}</td>
-              <td className="px-4 py-3 text-sm" title={appt.fullNote}>{appt.note || "–"}</td>
             </tr>
           ))}
         </tbody>
       </table>
+
+      {selectedAppointment?.mode === "edit" && (
+        <AddAppointmentPopup
+          appointment={selectedAppointment.data}
+          mode="edit"
+          onClose={() => setSelectedAppointment(null)}
+          onSaved={() => router.visit(route("appointments.index"))}
+        />
+      )}
     </div>
   );
 }

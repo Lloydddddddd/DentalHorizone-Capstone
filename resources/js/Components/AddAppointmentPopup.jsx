@@ -18,21 +18,40 @@ function formatDatetimeLocal(date = new Date()) {
     return `${year}-${month}-${day}T${hours}:${minutes}`;
 }
 
-export default function AddAppointmentPopup({ patient = null, onClose = () => {}, onSaved = null }) {
+export default function AddAppointmentPopup({ patient = null, appointment = null, mode = "add", onClose = () => {}, onSaved = null }) {
     const initialDate = formatDatetimeLocal();
-    const { data, setData, post, processing, errors, setErrors, reset } = useForm({
-        patient_id: patient?.id || '',
-        complaint: '',
-        services: [{ id: '', note: '' }],
-        date_of_visit: initialDate,
-        next_appointment: '',
-        no_next_appointment: false,
-        visit_status: 'pending',
-        debit: "",
-        credit: "",
-        balance: 0,
-        note: '',
-    });
+    const { data, setData, post, put, processing, errors, setErrors, reset } = useForm(
+        mode === "edit" && appointment
+            ? {
+                patient_id: appointment.patient_id || patient?.id || '',
+                complaint: appointment.complaint || '',
+                services: appointment.services?.map(s => ({
+                    id: s.id,
+                    note: s.pivot?.note || ''
+                })) || [{ id: '', note: '' }],
+                date_of_visit: appointment.date_of_visit || "",
+                next_appointment: appointment.next_appointment || '',
+                no_next_appointment: appointment.next_appointment ? false : true,
+                visit_status: appointment.visit_status || 'pending',
+                debit: appointment.debit ?? "",
+                credit: appointment.credit ?? "",
+                balance: appointment.balance ?? 0,
+                note: appointment.note || '',
+            }
+            : {
+                patient_id: patient?.id || '',
+                complaint: '',
+                services: [{ id: '', note: '' }],
+                date_of_visit: initialDate,
+                next_appointment: '',
+                no_next_appointment: false,
+                visit_status: 'pending',
+                debit: "",
+                credit: "",
+                balance: 0,
+                note: '',
+            }
+    );
 
     const firstInput = useRef(null);
 
@@ -71,6 +90,8 @@ export default function AddAppointmentPopup({ patient = null, onClose = () => {}
 
     function handleSubmit(e) {
         e.preventDefault();
+
+        setLocalErrors({});
 
         const validationErrors = {};
 
@@ -119,37 +140,49 @@ export default function AddAppointmentPopup({ patient = null, onClose = () => {}
         }
 
         // Proceed with server request
-        post(route('appointments.store'), {
-            data: {
-                patient_id: data.patient_id,
-                complaint: data.complaint,
-                date_of_visit: data.date_of_visit,
-                next_appointment: data.next_appointment,
-                no_next_appointment: data.no_next_appointment,
-                visit_status: data.visit_status,
-                debit: parseFloat(data.debit) || 0,
-                credit: parseFloat(data.credit) || 0,
-                balance: parseFloat(data.balance) || 0,
-                note: data.note,
-                services: data.services, // send array of {id, note}
-            },
-            onSuccess: (page) => {
-                if (onSaved && typeof onSaved === 'function') onSaved(page);
-                reset();
-                onClose();
-            },
-            onError: (errors) => {
-                // Laravel validation errors will automatically populate
-                console.error("Server validation errors:", errors);
-            }
-        });
+        if (mode === "edit" && appointment) {
+            put(route("appointments.update", appointment.id), {
+                data: {
+                    ...data,
+                    debit: parseFloat(data.debit) || 0,
+                    credit: parseFloat(data.credit) || 0,
+                    balance: parseFloat(data.balance) || 0,
+                },
+                onSuccess: (page) => {
+                    if (onSaved) onSaved(page);
+                    onClose();
+                },
+                onError: (errors) => {
+                    console.error("Server validation errors:", errors);
+                }
+            });
+        } else {
+            post(route("appointments.store"), {
+                data: {
+                    ...data,
+                    debit: parseFloat(data.debit) || 0,
+                    credit: parseFloat(data.credit) || 0,
+                    balance: parseFloat(data.balance) || 0,
+                },
+                onSuccess: (page) => {
+                    if (onSaved) onSaved(page);
+                    reset();
+                    onClose();
+                },
+                onError: (errors) => {
+                    console.error("Server validation errors:", errors);
+                }
+            });
+        }
     }
 
     return (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
             <div className="bg-white rounded shadow-lg w-full max-w-2xl flex flex-col max-h-[90vh]">
                 <div className="p-4 border-b">
-                    <h2 className="text-lg font-semibold">Add Appointment</h2>
+                    <h2 className="text-lg font-semibold">
+                        {mode === "edit" ? "Edit Appointment" : "Add Appointment"}
+                    </h2>
                 </div>
                 <div className="flex-1 overflow-y-auto p-6">
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -239,7 +272,12 @@ export default function AddAppointmentPopup({ patient = null, onClose = () => {}
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <InputLabel>Date of Visit</InputLabel>
-                                <input type="datetime-local" value={data.date_of_visit} onChange={e => setData('date_of_visit', e.target.value)} className="mt-1 w-full rounded-md border-gray-300" required />
+                                <input
+                                    type="datetime-local"
+                                    value={data.date_of_visit || ""}   // ✅ always a string
+                                    onChange={(e) => setData("date_of_visit", e.target.value)}
+                                    className="mt-1 w-full rounded-md border-gray-300"
+                                />
                                 <InputError message={localErrors.date_of_visit || errors.date_of_visit} />
                             </div>
 
@@ -330,8 +368,18 @@ export default function AddAppointmentPopup({ patient = null, onClose = () => {}
                         </div>
 
                         <div className="p-4 border-t flex justify-end gap-2">
-                            <button type="button" onClick={() => { reset(); onClose(); }} className="px-4 py-2 bg-gray-300 rounded">Cancel</button>
-                            <PrimaryButton type="submit" disabled={processing}>{processing ? 'Saving...' : 'Save'}</PrimaryButton>
+                            <button
+                                type="button"
+                                onClick={() => { reset(); onClose(); }}
+                                className="px-4 py-2 bg-gray-300 rounded"
+                            >
+                                Cancel
+                            </button>
+                            <PrimaryButton type="submit" disabled={processing}>
+                                {processing
+                                ? (mode === "edit" ? "Updating..." : "Saving...")
+                                : (mode === "edit" ? "Save Changes" : "Save")}
+                            </PrimaryButton>
                         </div>
                     </form>
                 </div>

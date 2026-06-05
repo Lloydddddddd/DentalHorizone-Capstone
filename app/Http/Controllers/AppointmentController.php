@@ -27,13 +27,11 @@ class AppointmentController extends Controller
             $query->where('visit_status', $request->input('status'));
         }
 
-        $sort = $request->input('sort', 'date_of_visit');
-        $direction = $request->input('direction', 'desc');
-        $query->orderBy($sort, $direction);
+        $query->orderBy('created_at', 'desc');
 
         $appointments = $query->paginate(10)->withQueryString();
 
-        return inertia('Appointments/Index', [
+        return inertia('Appointments/Pages/Index', [
             'appointments' => $appointments,
             'filters' => $request->only(['search', 'status', 'sort', 'direction']),
         ]);
@@ -45,7 +43,8 @@ class AppointmentController extends Controller
 
         $query = Appointment::with(['patient', 'services'])
             ->whereNotNull('next_appointment')
-            ->where('next_appointment', '>', $now);
+            ->where('next_appointment', '>', $now)
+            ->where('visit_status', '!=', 'cancelled');
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -62,7 +61,7 @@ class AppointmentController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return inertia('Appointments/Upcoming', [
+        return inertia('Appointments/Pages/Upcoming', [
             'appointments' => $appointments,
             'filters' => $request->only(['search', 'status']),
         ]);
@@ -74,7 +73,8 @@ class AppointmentController extends Controller
 
         $query = Appointment::with(['patient', 'services'])
             ->whereNotNull('next_appointment')
-            ->where('next_appointment', '<', $now);
+            ->where('next_appointment', '<', $now)
+            ->where('visit_status', '!=', 'cancelled');
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -91,7 +91,7 @@ class AppointmentController extends Controller
             ->paginate(10)
             ->withQueryString();
 
-        return inertia('Appointments/Missed', [
+        return inertia('Appointments/Pages/Missed', [
             'appointments' => $appointments,
             'filters' => $request->only(['search', 'status']),
         ]);
@@ -170,20 +170,20 @@ class AppointmentController extends Controller
             'age'            => 'required|integer|min:0',
             'occupation'     => 'nullable|string|max:100',
             'address'        => 'nullable|string|max:200',
-            'date_of_visit' => 'required|date_format:Y-m-d\TH:i',
+            'next_appointment' => 'required|date_format:Y-m-d\TH:i',
             'services'       => 'required|array|min:1',
             'services.*'     => 'exists:services,id',
             'complaint'      => 'nullable|string|max:200',
             'note'           => 'nullable|string|max:500',
         ]);
 
-        $conflict = Appointment::where('date_of_visit', $validated['date_of_visit'])
+        $conflict = Appointment::where('next_appointment', $validated['next_appointment'])
             ->whereIn('visit_status', ['pending', 'confirmed']) // only block active appointments
             ->exists();
 
         if ($conflict) {
             return redirect()->back()->withErrors([
-                'date_of_visit' => 'This time slot is already taken. Please choose another.',
+                'next_appointment' => 'This time slot is already taken. Please choose another.',
             ])->withInput();
         }
 
@@ -201,8 +201,8 @@ class AppointmentController extends Controller
         $appointment = Appointment::create([
             'patient_id'     => $patient->id,
             'complaint'      => $validated['complaint'] ?? null,
-            'date_of_visit'  => $validated['date_of_visit'],
-            'next_appointment'=> $validated['date_of_visit'], // align with upcoming/missed logic
+            'date_of_visit'  => null,
+            'next_appointment'=> $validated['next_appointment'], // align with upcoming/missed logic
             'visit_status'   => 'pending', // standardized lowercase
             'debit'          => 0,
             'credit'         => 0,
@@ -219,9 +219,101 @@ class AppointmentController extends Controller
         return redirect()->back()->with('success', 'Your appointment request has been submitted!');
     }
 
+    public function reschedule(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'date_of_visit' => 'required|date',
+            'next_appointment' => 'nullable|date',
+        ]);
+
+        $appointment = Appointment::findOrFail($id);
+
+        // Prevent overlapping schedule
+        $conflict = Appointment::where('id', '!=', $id)
+            ->where('date_of_visit', $validated['date_of_visit'])
+            ->whereIn('visit_status', ['pending', 'confirmed'])
+            ->exists();
+
+        if ($conflict) {
+            return response()->json([
+                'message' => 'This time slot is already taken. Please choose another.'
+            ], 422);
+        }
+
+        $appointment->date_of_visit = $validated['date_of_visit'];
+        $appointment->next_appointment = $validated['next_appointment'] ?? $validated['date_of_visit'];
+        $appointment->save();
+
+        return response()->json(['message' => 'Appointment rescheduled successfully']);
+    }
+
+    public function edit($id)
+    {
+        $appointment = Appointment::with(['patient', 'services'])->findOrFail($id);
+
+        return inertia('Appointments/Pages/Edit', [
+            'appointment' => $appointment,
+            'services' => \App\Models\Service::all(),
+        ]);
+    }
+
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'complaint' => 'required|string|max:200',
+            'date_of_visit' => 'required|date',
+            'next_appointment' => 'nullable|date',
+            'no_next_appointment' => 'nullable|boolean',
+            'visit_status' => 'required|string|max:50',
+            'debit' => 'nullable|numeric|min:0',
+            'credit' => 'nullable|numeric|min:0',
+            'balance' => 'nullable|numeric',
+            'note' => 'nullable|string|max:500',
+            'services' => 'required|array|min:1',
+            'services.*.id' => 'required|exists:services,id',
+            'services.*.note' => 'nullable|string|max:500',
+        ]);
+
+        if ($request->boolean('no_next_appointment')) {
+            $validated['next_appointment'] = null;
+        } elseif ($request->filled('next_appointment')) {
+            $validated['next_appointment'] = Carbon::parse($request->input('next_appointment'));
+        }
+
+        $validated['balance'] = ($validated['debit'] ?? 0) - ($validated['credit'] ?? 0);
+
+        $appointment = Appointment::findOrFail($id);
+        $appointment->update([
+            'complaint' => $validated['complaint'],
+            'date_of_visit' => $validated['date_of_visit'],
+            'next_appointment' => $validated['next_appointment'],
+            'visit_status' => $validated['visit_status'],
+            'debit' => $validated['debit'] ?? 0,
+            'credit' => $validated['credit'] ?? 0,
+            'balance' => $validated['balance'],
+            'note' => $validated['note'] ?? null,
+        ]);
+
+        // Sync services with pivot notes
+        $appointment->services()->sync(
+            collect($validated['services'])->mapWithKeys(fn($srv) => [
+                $srv['id'] => ['note' => $srv['note'] ?? null],
+            ])
+        );
+
+        return redirect()->route('appointments.index')->with('success', 'Appointment updated successfully.');
+    }
+
+    public function cancel($id)
+    {
+        $appointment = Appointment::findOrFail($id);
+        $appointment->visit_status = 'cancelled';
+        $appointment->save();
+
+        return response()->json(['message' => 'Appointment cancelled successfully']);
+    }
+
     public function create() {}
     public function show(string $id) {}
-    public function edit(string $id) {}
-    public function update(Request $request, string $id) {}
     public function destroy(string $id) {}
 }
