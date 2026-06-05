@@ -163,9 +163,20 @@ class PatientController extends Controller
     /**
      * Display a listing of archived patients.
      */
-    public function archivedIndex()
+    public function archivedIndex(Request $request)
     {
-        $archived = ArchivedPatient::orderBy('patient_name')->paginate(20);
+        $query = ArchivedPatient::orderBy('patient_name');
+
+        if ($search = $request->input('q')) {
+            $query->where(function ($q) use ($search) {
+                $q->where('patient_name', 'like', "%{$search}%")
+                  ->orWhere('telephone', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('occupation', 'like', "%{$search}%");
+            });
+        }
+
+        $archived = $query->paginate(20)->withQueryString();
         return Inertia::render('ArchivedPatients/Index', [
             'archivedPatients' => $archived,
         ]);

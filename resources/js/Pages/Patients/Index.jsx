@@ -4,6 +4,7 @@ import { Head, Link, usePage, router } from "@inertiajs/react";
 import Modal from "@/Components/Modal";
 import InlineForm from "@/Pages/Patients/InlineForm";
 import AddAppointmentPopup from "@/Components/AddAppointmentPopup";
+import SearchFilter from "@/Components/SearchFilter";
 
 export default function Index({ patients, totalPatients }) {
     const { props } = usePage();
@@ -24,9 +25,10 @@ export default function Index({ patients, totalPatients }) {
     const [showApptModal, setShowApptModal] = useState(false);
     const [apptPatient, setApptPatient] = useState(null);
 
-    // Debounced search
-    const [search, setSearch] = useState("");
+    // Search functionality
+    const [search, setSearch] = useState(props?.q || "");
 
+    // Debounced search
     useEffect(() => {
         const handler = setTimeout(() => {
             router.get(
@@ -89,21 +91,16 @@ export default function Index({ patients, totalPatients }) {
                     </Link>
                 </div>
 
-                {/* Search and Add Button */}
-                <div className="flex items-center justify-between mb-6">
+                {/* Search + Add Button */}
+                <div className="flex items-center justify-between gap-4 mb-6">
                     <div className="flex-1 flex items-center space-x-3">
                         <form
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                            }}
-                            className="flex items-center space-x-2 w-full max-w-lg"
+                            onSubmit={(e) => e.preventDefault()}
+                            className="flex items-center space-x-2 flex-1"
                         >
-                            <input
-                                type="text"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Search name, phone, email or occupation"
-                                className="w-full rounded-md border px-3 py-2 text-sm placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500"
+                            <SearchFilter
+                                searchValue={search}
+                                onSearchChange={(e) => setSearch(e.target.value)}
                             />
                             <button
                                 type="submit"
