@@ -39,19 +39,19 @@ export default function ArchivedIndex({ archivedPatients }) {
                 </div>
 
                 <div className="bg-white shadow-sm rounded-md overflow-hidden">
-                    <table className="min-w-full table-auto divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                    <table className="min-w-full table-auto border border-gray-300 divide-y divide-gray-300">
+                        <thead className="bg-orange-50">
                             <tr>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Name</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Age</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Occupation</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Contact</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Email</th>
-                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500">Archived At</th>
-                                <th className="px-4 py-3 text-right">Actions</th>
+                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">Name</th>
+                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">Age</th>
+                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">Occupation</th>
+                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">Contact</th>
+                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">Email</th>
+                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">Archived At</th>
+                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-100">
+                        <tbody className="bg-white divide-y divide-gray-300">
                             {items.length === 0 ? (
                                 <tr>
                                     <td colSpan={7} className="px-6 py-8 text-center text-sm text-gray-500">
@@ -76,7 +76,7 @@ export default function ArchivedIndex({ archivedPatients }) {
                                                 : '-'
                                             }
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-right">
+                                        <td className="px-4 py-3 text-sm text-left space-x-4">
                                             <button
                                                 onClick={() => { setSelected(a); setShowRestoreModal(true); }}
                                                 className="text-blue-600 hover:text-blue-800 hover:underline font-medium"

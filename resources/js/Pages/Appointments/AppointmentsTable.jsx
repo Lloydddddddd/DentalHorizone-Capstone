@@ -31,26 +31,26 @@ export default function AppointmentsTable({ appointments }) {
 
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full table-auto divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+      <table className="min-w-full table-auto border border-gray-300">
+        <thead className="bg-orange-50">
           <tr>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Date of Visit</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Next Appointment</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Name</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Complaint</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Service</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Visit Status</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Balance</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Debit</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Credit</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Note</th>
-            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">Actions</th>
+            <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-300">Date of Visit</th>
+            <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-300">Next Appointment</th>
+            <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-300">Name</th>
+            <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-300">Complaint</th>
+            <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-300">Service</th>
+            <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-300">Visit Status</th>
+            <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-300">Debit</th>
+            <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-300">Credit</th>
+            <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-300">Balance</th>
+            <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-300">Note</th>
+            <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-300">Actions</th>
           </tr>
         </thead>
-        <tbody className="bg-white divide-y divide-gray-100">
+        <tbody className="bg-white divide-y divide-gray-300">
           {appointments.length === 0 && (
             <tr>
-              <td colSpan={10} className="px-6 py-4 text-center text-sm text-gray-500">
+              <td colSpan={10} className="px-6 py-6 text-center text-sm text-gray-500">
                 No appointments found.
               </td>
             </tr>
@@ -58,23 +58,43 @@ export default function AppointmentsTable({ appointments }) {
 
           {appointments.map((appointment) => (
             <tr key={appointment.id} className="hover:bg-gray-50 transition">
-              <td className="px-4 py-3 text-sm">{appointment.date_of_visit}</td>
-              <td className="px-4 py-3 text-sm">{appointment.next_appointment || "–"}</td>
-              <td className="px-4 py-3 text-sm font-medium">{appointment.patient_name}</td>
-              <td className="px-4 py-3 text-sm" title={appointment.fullComplaint}>{appointment.complaint}</td>
-              <td className="px-4 py-3 text-sm" title={appointment.fullService}>{appointment.service}</td>
-              <td className="px-4 py-3 text-sm capitalize">{appointment.visit_status}</td>
-              <td className="px-4 py-3 text-sm">{appointment.balance}</td>
-              <td className="px-4 py-3 text-sm">{appointment.debit}</td>
-              <td className="px-4 py-3 text-sm">{appointment.credit}</td>
-              <td className="px-4 py-3 text-sm" title={appointment.fullNote}>{appointment.note || "–"}</td>
-              <td className="px-4 py-3 text-sm space-x-2">
+              <td className="px-1 py-2 text-sm text-gray-600">{appointment.date_of_visit}</td>
+              <td className="px-1 py-2 text-sm text-gray-600">{appointment.next_appointment || "–"}</td>
+              <td className="px-1 py-2 text-sm font-medium">{appointment.patient_name}</td>
+              <td className="px-1 py-2 text-sm" title={appointment.fullComplaint}>{appointment.complaint}</td>
+              <td className="px-1 py-2 text-sm" title={appointment.fullService}>{appointment.service}</td>
+              <td className="px-1 py-2 text-sm capitalize">
+                  {appointment.visit_status === "pending" && (
+                    <span className="px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
+                      Pending
+                    </span>
+                  )}
+                  {appointment.visit_status === "completed" && (
+                    <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                      Completed
+                    </span>
+                  )}
+                  {appointment.visit_status === "cancelled" && (
+                    <span className="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                      Cancelled
+                    </span>
+                  )}
+                </td>
+
+              <td className="px-1 py-2 text-sm">{appointment.debit}</td>
+              <td className="px-1 py-2 text-sm">{appointment.credit}</td>
+              <td className="px-1 py-2 text-sm">{appointment.balance}</td>
+              <td className="px-1 py-2 text-sm" title={appointment.fullNote}>{appointment.note || "–"}</td>
+              <td className="px-2 py-3 text-sm space-x-2">
+
                 <AppointmentsTableViewButtonModal appointment={appointment} />
+
                 <AppointmentsTableRescheduleButton appointment={appointment} />
+
                 {appointment.visit_status !== "cancelled" && (
                   <button
                     onClick={() => handleCancel(appointment.id)}
-                    className="bg-red-500 text-white px-3 py-1 rounded text-xs"
+                    className="text-red-600 hover:text-red-800 hover:underline"
                   >
                     Cancel
                   </button>
@@ -94,7 +114,7 @@ export default function AppointmentsTable({ appointments }) {
                       },
                     })
                   }
-                  className="bg-yellow-500 text-white px-3 py-1 rounded text-xs"
+                  className="text-green-600 hover:text-green-800 hover:underline"
                 >
                   Edit
                 </button>

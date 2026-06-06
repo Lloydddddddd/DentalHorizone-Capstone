@@ -26,7 +26,7 @@ export default function Sidebar() {
                 { label: 'Missed Appointments', href: '/Appointments/Missed' },
             ],
         },
-        { label: 'Reports', href: '/reports' },
+       
     ];
 
     return (

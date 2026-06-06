@@ -7,7 +7,7 @@ export default function AppointmentsTableViewButtonModal({ appointment }) {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="bg-blue-500 text-white px-3 py-1 rounded text-xs"
+        className="text-indigo-600 hover:text-indigo-800 hover:underline"
       >
         View
       </button>
@@ -31,9 +31,10 @@ export default function AppointmentsTableViewButtonModal({ appointment }) {
             <p><strong>Complaint:</strong> {appointment.fullComplaint || appointment.complaint}</p>
             <p><strong>Service:</strong> {appointment.fullService || appointment.service}</p>
             <p><strong>Note:</strong> {appointment.fullNote || appointment.note || "–"}</p>
-            <p><strong>Balance:</strong> {appointment.balance}</p>
+            
             <p><strong>Debit:</strong> {appointment.debit}</p>
             <p><strong>Credit:</strong> {appointment.credit}</p>
+            <p><strong>Balance:</strong> {appointment.balance}</p>
 
             <button
               onClick={() => setOpen(false)}
