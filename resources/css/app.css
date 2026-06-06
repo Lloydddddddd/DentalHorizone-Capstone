@@ -1,4 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/geist";
 
 @tailwind base;
 @tailwind components;
@@ -6,47 +9,55 @@
 
 @layer base {
     :root {
-        /* Design Tokens */
-        --color-background:       #f8fafc;
-        --color-surface:          #ffffff;
-        --color-border:           #cbd5e1;
-        --color-foreground:       #0f172a;
-        --color-muted:            #64748b;
-        --color-primary:          #1e3a8a;
-        --color-primary-fg:       #ffffff;
-        --color-secondary:        #eff6ff;
-        --color-secondary-fg:     #1e40af;
-        --color-success:          #10b981;
-        --color-warning:          #f59e0b;
-        --color-danger:           #ef4444;
+        --background: 0 0% 100%;
+        --foreground: 240 10% 3.9%;
+        --card: 0 0% 100%;
+        --card-foreground: 240 10% 3.9%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 240 10% 3.9%;
+        --primary: 0 0% 9%;
+        --primary-foreground: 0 0% 98%;
+        --secondary: 240 4.8% 95.9%;
+        --secondary-foreground: 240 5.9% 10%;
+        --muted: 240 4.8% 95.9%;
+        --muted-foreground: 240 3.8% 46.1%;
+        --accent: 240 4.8% 95.9%;
+        --accent-foreground: 240 5.9% 10%;
+        --destructive: 0 84.2% 60.2%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 240 5.9% 90%;
+        --input: 240 5.9% 90%;
+        --ring: 240 10% 3.9%;
+        --radius: 0.625rem;
+    }
+
+    .dark {
+        --background: 240 10% 3.9%;
+        --foreground: 0 0% 98%;
+        --card: 240 10% 3.9%;
+        --card-foreground: 0 0% 98%;
+        --popover: 240 10% 3.9%;
+        --popover-foreground: 0 0% 98%;
+        --primary: 0 0% 98%;
+        --primary-foreground: 240 10% 3.9%;
+        --secondary: 240 3.7% 15.9%;
+        --secondary-foreground: 0 0% 98%;
+        --muted: 240 3.7% 15.9%;
+        --muted-foreground: 240 5% 64.9%;
+        --accent: 240 3.7% 15.9%;
+        --accent-foreground: 0 0% 98%;
+        --destructive: 0 62.8% 30.6%;
+        --destructive-foreground: 0 0% 98%;
+        --border: 240 3.7% 15.9%;
+        --input: 240 3.7% 15.9%;
+        --ring: 240 4.9% 83.9%;
     }
 
     html, body {
-        @apply h-full m-0 p-0;
-        font-family: 'DM Sans', sans-serif;
-        background-color: var(--color-background);
-        color: var(--color-foreground);
+        font-family: 'DM Sans', 'Geist Variable', system-ui, sans-serif;
     }
 
-    #app {
-        @apply h-full;
+    * {
+        @apply border-border;
     }
-}
-
-@layer utilities {
-    .font-headings  { font-family: 'DM Sans', sans-serif; font-weight: 700; }
-    .font-sans      { font-family: 'DM Sans', sans-serif; }
-    .bg-background  { background-color: var(--color-background); }
-    .bg-surface     { background-color: var(--color-surface); }
-    .bg-secondary   { background-color: var(--color-secondary); }
-    .bg-primary     { background-color: var(--color-primary); }
-    .bg-border      { background-color: var(--color-border); }
-    .border-border  { border-color: var(--color-border); }
-    .text-foreground       { color: var(--color-foreground); }
-    .text-muted            { color: var(--color-muted); }
-    .text-primary          { color: var(--color-primary); }
-    .text-secondary-fg     { color: var(--color-secondary-fg); }
-    .text-success          { color: var(--color-success); }
-    .text-white            { color: #ffffff; }
-    .bg-success\/10        { background-color: color-mix(in srgb, var(--color-success) 10%, transparent); }
 }
