@@ -21,12 +21,13 @@ export default function AppointmentsTableRescheduleButton({ appointment }) {
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="bg-yellow-500 text-white px-3 py-1 rounded text-xs"
-      >
-        Reschedule
-      </button>
+        <button
+          onClick={() => setOpen(true)}
+          className="text-orange-600 hover:text-orange-800 hover:underline"
+        >
+          Reschedule
+        </button>
+
 
       {open && (
         <div
