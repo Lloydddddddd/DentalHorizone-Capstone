@@ -124,31 +124,33 @@ export default function Index({ patients, totalPatients }) {
                 </div>
 
                 <div className="bg-white shadow-sm rounded-md overflow-hidden">
-                    <table className="min-w-full table-auto divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
+                    <table className="min-w-full table-auto border border-gray-300">
+                        <thead className="bg-orange-50">
                             <tr>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                                <th className="px-6 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">
                                     Name
                                 </th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">
                                     Age
                                 </th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">
                                     Occupation
                                 </th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400 ">
                                     Contact
                                 </th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">
                                     Email
                                 </th>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500">
+                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">
                                     Status
                                 </th>
-                                <th className="px-4 py-2" />
+                                <th className="px-5 py-2 text-center text-xs font-bold text-blue-900 border-b-2 border-orange-400">
+                                Actions
+                                </th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-100">
+                        <tbody className="bg-white divide-y divide-gray-300">
                             {patientsData.length === 0 && (
                                 <tr>
                                     <td
@@ -185,6 +187,7 @@ export default function Index({ patients, totalPatients }) {
                                             Active
                                         </span>
                                     </td>
+                                    
                                     <td className="px-4 py-3 text-sm text-right space-x-4">
                                         <button
                                             onClick={() => {
@@ -197,7 +200,7 @@ export default function Index({ patients, totalPatients }) {
                                         </button>
                                         <button
                                             onClick={() => openEditModal(p)}
-                                            className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+                                            className="text-green-700 hover:text-green-800 hover:underline font-medium"
                                         >
                                             Edit
                                         </button>
@@ -211,6 +214,7 @@ export default function Index({ patients, totalPatients }) {
                                             Archive
                                         </button>
                                     </td>
+                                    
                                 </tr>
                             ))}
                         </tbody>
@@ -305,6 +309,8 @@ export default function Index({ patients, totalPatients }) {
                         ? `Page ${patients.meta.current_page} of ${patients.meta.last_page}`
                         : ""}
                 </div>
+
+                
 
                 {/* Edit modal placeholder removed (kept HEAD behavior: controller-based edit exists elsewhere) */}
             </div>
