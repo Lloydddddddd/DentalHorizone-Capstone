@@ -74,38 +74,48 @@ export default function AppointmentsPage({ appointments, filters, title, routeNa
         >
             <Head title={title} />
 
-            <div className="p-6 space-y-4">
-                <SearchFilter
-                    searchValue={safeFilters.search}
-                    onSearchChange={handleSearchChange}
-                />
+            <div className="p-8 space-y-8 bg-gray-100">
 
-                <StatusFilter
+                <div className="flex gap-1 ">
+                    <div className="flex-1">
+                    <SearchFilter
+                        searchValue={safeFilters.search}
+                        onSearchChange={handleSearchChange}
+                    />
+                    </div>
+
+                    <StatusFilter
                     value={safeFilters.status}
                     onChange={(status) =>
-                    router.get(route(routeName), {
+                        router.get(route(routeName), {
                         search: safeFilters.search,
                         status,
                         sort: safeFilters.sort,
                         direction: safeFilters.direction,
-                    }, { preserveState: true, replace: true })
+                        }, { preserveState: true, replace: true })
                     }
-                />
+                    />
+                </div>
 
                 <AppointmentsTable appointments={mappedAppointments} highlightId={highlightId} />
 
-                <div className="flex gap-2 mt-4">
-                    {appointments.links.map((link, index) => (
-                        <Link
-                            key={index}
-                            href={link.url || '#'}
-                            className={`px-3 py-1 border rounded ${
-                                link.active ? 'bg-blue-600 text-white' : 'bg-white'
-                            }`}
-                            dangerouslySetInnerHTML={{ __html: link.label }}
-                        />
-                    ))}
+               <div className="flex gap-2 mt-4 justify-center">
+                {appointments.links.map((link, index) => (
+                    <Link
+                    key={index}
+                    href={link.url || '#'}
+                    className={`px-3 py-1 text-sm font-medium border rounded-full transition-colors
+                        ${
+                        link.active
+                            ? 'bg-blue-900 text-white border-gray-600'
+                            : 'bg-white text-blue-900 border-orange-200 hover:bg-orange-50 hover:border-blue-600'
+                        }`}
+                    dangerouslySetInnerHTML={{ __html: link.label }}
+                    />
+                ))}
                 </div>
+
+
             </div>
         </AuthenticatedLayout>
     );
