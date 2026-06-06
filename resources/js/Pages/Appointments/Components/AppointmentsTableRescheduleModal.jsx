@@ -15,7 +15,11 @@ export default function AppointmentsTableRescheduleButton({ appointment }) {
       window.location.reload();
     } catch (error) {
       console.error(error);
-      alert("Failed to reschedule appointment.");
+      if (error.response && error.response.data && error.response.data.message) {
+        alert(error.response.data.message);
+      } else {
+        alert("Failed to reschedule appointment.");
+      }
     }
   };
 

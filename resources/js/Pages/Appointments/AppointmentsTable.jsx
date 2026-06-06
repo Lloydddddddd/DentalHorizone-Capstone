@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { router } from "@inertiajs/react";
 import axios from "axios";
 import AppointmentsTableViewButtonModal from "@/Pages/Appointments/Components/AppointmentsTableViewModal";
 import AppointmentsTableRescheduleButton from "@/Pages/Appointments/Components/AppointmentsTableRescheduleModal";
 import AddAppointmentPopup from "@/Components/AddAppointmentPopup";
 
-export default function AppointmentsTable({ appointments }) {
+export default function AppointmentsTable({ appointments, highlightId }) {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const rowRefs = useRef({});
 
   useEffect(() => {
     const handleEsc = (e) => {
@@ -16,8 +17,16 @@ export default function AppointmentsTable({ appointments }) {
     return () => window.removeEventListener("keydown", handleEsc);
   }, []);
 
+  useEffect(() => {
+    if (highlightId && rowRefs.current[highlightId]) {
+      rowRefs.current[highlightId].scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, [highlightId]);
+
   const handleCancel = async (id) => {
-    console.log("Cancelling appointment ID:", id); // Debug
     if (!confirm("Are you sure you want to cancel this appointment?")) return;
 
     try {
@@ -50,47 +59,51 @@ export default function AppointmentsTable({ appointments }) {
         <tbody className="bg-white divide-y divide-gray-300">
           {appointments.length === 0 && (
             <tr>
-              <td colSpan={10} className="px-6 py-6 text-center text-sm text-gray-500">
+              <td colSpan={11} className="px-6 py-6 text-center text-sm text-gray-500">
                 No appointments found.
               </td>
             </tr>
           )}
 
           {appointments.map((appointment) => (
-            <tr key={appointment.id} className="hover:bg-gray-50 transition">
-              <td className="px-1 py-2 text-sm text-gray-600">{appointment.date_of_visit}</td>
-              <td className="px-1 py-2 text-sm text-gray-600">{appointment.next_appointment || "–"}</td>
-              <td className="px-1 py-2 text-sm font-medium">{appointment.patient_name}</td>
-              <td className="px-1 py-2 text-sm" title={appointment.fullComplaint}>{appointment.complaint}</td>
-              <td className="px-1 py-2 text-sm" title={appointment.fullService}>{appointment.service}</td>
-              <td className="px-1 py-2 text-sm capitalize">
-                  {appointment.visit_status === "pending" && (
-                    <span className="px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
-                      Pending
-                    </span>
-                  )}
-                  {appointment.visit_status === "completed" && (
-                    <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-                      Completed
-                    </span>
-                  )}
-                  {appointment.visit_status === "cancelled" && (
-                    <span className="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
-                      Cancelled
-                    </span>
-                  )}
-                </td>
-
-              <td className="px-1 py-2 text-sm">{appointment.debit}</td>
-              <td className="px-1 py-2 text-sm">{appointment.credit}</td>
-              <td className="px-1 py-2 text-sm">{appointment.balance}</td>
-              <td className="px-1 py-2 text-sm" title={appointment.fullNote}>{appointment.note || "–"}</td>
-              <td className="px-2 py-3 text-sm space-x-2">
-
+            <tr
+              key={appointment.id}
+              ref={(el) => (rowRefs.current[appointment.id] = el)}
+              className={`last:border-0 ${
+                highlightId == appointment.id
+                  ? "bg-yellow-100 ring-2 ring-yellow-400"
+                  : "hover:bg-gray-50 transition"
+              }`}
+            >
+              <td className="px-4 py-3 text-sm">{appointment.date_of_visit}</td>
+              <td className="px-4 py-3 text-sm">{appointment.next_appointment || "–"}</td>
+              <td className="px-4 py-3 text-sm font-medium">{appointment.patient_name}</td>
+              <td className="px-4 py-3 text-sm" title={appointment.fullComplaint}>{appointment.complaint}</td>
+              <td className="px-4 py-3 text-sm" title={appointment.fullService}>{appointment.service}</td>
+              <td className="px-4 py-3 text-sm capitalize">
+                {appointment.visit_status === "pending" && (
+                  <span className="px-2 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
+                    Pending
+                  </span>
+                )}
+                {appointment.visit_status === "completed" && (
+                  <span className="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                    Completed
+                  </span>
+                )}
+                {appointment.visit_status === "cancelled" && (
+                  <span className="px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                    Cancelled
+                  </span>
+                )}
+              </td>
+              <td className="px-4 py-3 text-sm">{appointment.debit}</td>
+              <td className="px-4 py-3 text-sm">{appointment.credit}</td>
+              <td className="px-4 py-3 text-sm">{appointment.balance}</td>
+              <td className="px-4 py-3 text-sm" title={appointment.fullNote}>{appointment.note || "–"}</td>
+              <td className="px-4 py-3 text-sm space-x-2">
                 <AppointmentsTableViewButtonModal appointment={appointment} />
-
                 <AppointmentsTableRescheduleButton appointment={appointment} />
-
                 {appointment.visit_status !== "cancelled" && (
                   <button
                     onClick={() => handleCancel(appointment.id)}

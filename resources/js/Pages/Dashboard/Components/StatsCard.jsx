@@ -6,8 +6,6 @@ import {
     Calendar,
     Clock,
     AlertTriangle,
-    TrendingUp,
-    TrendingDown,
 } from 'lucide-react';
 
 const iconMap = {
@@ -19,7 +17,7 @@ const iconMap = {
     'alert-triangle': AlertTriangle,
 };
 
-export default function StatsCard({ title, value, trend, trendUp, icon, onClick, active = false }) {
+export default function StatsCard({ title, value, icon, onClick, active = false }) {
     const Icon = iconMap[icon] ?? Users;
 
     return (
@@ -44,12 +42,6 @@ export default function StatsCard({ title, value, trend, trendUp, icon, onClick,
             </div>
             <div className="flex items-end justify-between">
                 <span className="text-3xl font-bold font-headings text-foreground">{value}</span>
-                <div className={`flex items-center text-sm font-medium ${trendUp ? 'text-success' : 'text-destructive'}`}>
-                    {trendUp
-                        ? <TrendingUp size={16} className="mr-1" />
-                        : <TrendingDown size={16} className="mr-1" />}
-                    {trend}
-                </div>
             </div>
         </button>
     );

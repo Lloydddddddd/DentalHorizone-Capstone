@@ -6,6 +6,8 @@ use Inertia\Inertia;
 use Inertia\Response;
 use App\Models\Patient;
 use Illuminate\Support\Facades\DB;
+use App\Models\Appointment;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 {
@@ -31,7 +33,7 @@ class DashboardController extends Controller
             ->where('next_appointment', '<', $now)
             ->count();
 
-        $todayAppointments = DB::table('appointments')
+        $todayAppointments = Appointment::with(['patient','services'])
         ->whereNotNull('next_appointment')
         ->whereDate('next_appointment', $now->toDateString())
         ->where('next_appointment', '>=', $now)
@@ -48,7 +50,7 @@ class DashboardController extends Controller
             'missed_appointments'   => $missedAppointments,
         ];
 
-        return Inertia::render('Dashboard', [
+        return Inertia::render('Dashboard/Pages/Dashboard', [
             'stats'                => $stats,
             'todayAppointments'    => $todayAppointments,
             'calendarAppointments' => $calendarAppointments,

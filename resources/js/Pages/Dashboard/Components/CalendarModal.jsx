@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { STATUS_COLORS, FILTER_LABELS } from './calendarHelpers';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -48,40 +49,7 @@ function dayBadgeColor(dayAppts, todayStr) {
     return null;
 }
 
-const STATUS_COLORS = {
-    missed:   {
-        bg: 'bg-red-500',
-        text: 'text-white',
-        light: 'bg-red-50 text-red-700 border-red-200',
-        dot: 'bg-red-500',
-        btn: 'bg-red-500 hover:bg-red-600',
-    },
-    today:    {
-        bg: 'bg-orange-500',
-        text: 'text-white',
-        light: 'bg-orange-50 text-orange-700 border-orange-200',
-        dot: 'bg-orange-500',
-        btn: 'bg-orange-500 hover:bg-orange-600',
-    },
-    upcoming: {
-        bg: 'bg-green-500',
-        text: 'text-white',
-        light: 'bg-green-50 text-green-700 border-green-200',
-        dot: 'bg-green-500',
-        btn: 'bg-green-500 hover:bg-green-600',
-    },
-};
-
-// Filter label display
-const FILTER_LABELS = {
-    missed:   { label: 'Missed',   color: 'bg-red-100 text-red-700' },
-    today:    { label: 'Today',    color: 'bg-orange-100 text-orange-700' },
-    upcoming: { label: 'Upcoming', color: 'bg-green-100 text-green-700' },
-};
-
-// ─── Calendar Modal ──────────────────────────────────────────────────────────
-
-function CalendarModal({ appointments, onClose, initialFilter = null }) {
+export default function CalendarModal({ appointments, onClose, initialFilter = null }) {
     const today    = new Date();
     const todayStr = today.toISOString().slice(0, 10);
 
@@ -304,93 +272,5 @@ function CalendarModal({ appointments, onClose, initialFilter = null }) {
                 </div>
             </div>
         </div>
-    );
-}
-
-// ─── Main Component ──────────────────────────────────────────────────────────
-
-export default function ScheduleTable({
-    appointments = [],
-    calendarAppointments = [],
-    stats = {},
-    externalFilter = null,
-    externalOpen = false,
-    onCalendarClose = null,
-}) {
-    const [internalOpen, setInternalOpen] = useState(false);
-
-    // Merge external open (from stat card clicks) with internal (View Calendar button)
-    const isOpen = externalOpen || internalOpen;
-
-    function handleClose() {
-        setInternalOpen(false);
-        if (onCalendarClose) onCalendarClose();
-    }
-
-    // Button color: driven by stats hierarchy
-    const buttonColor = (() => {
-        if ((stats.missed_appointments   ?? 0) > 0) return STATUS_COLORS.missed.btn;
-        if ((stats.todays_appointments   ?? 0) > 0) return STATUS_COLORS.today.btn;
-        if ((stats.upcoming_appointments ?? 0) > 0) return STATUS_COLORS.upcoming.btn;
-        return 'bg-green-500 hover:bg-green-600';
-    })();
-
-    return (
-        <>
-            <div className="bg-surface border border-border rounded flex flex-col h-full">
-                <div className="px-6 py-5 border-b border-border flex items-center justify-between">
-                    <h2 className="text-lg font-bold font-headings">Today's Action</h2>
-                    <button
-                        className={`text-sm font-medium px-3 py-1.5 rounded transition-colors text-white ${buttonColor}`}
-                        type="button"
-                        onClick={() => setInternalOpen(true)}
-                    >
-                        View Calendar
-                    </button>
-                </div>
-
-                <div className="overflow-auto">
-                    <table className="w-full text-left border-collapse text-sm">
-                        <thead>
-                            <tr className="border-b border-border text-muted">
-                                <th className="px-6 py-3 font-medium">Time</th>
-                                <th className="px-6 py-3 font-medium">Patient Name</th>
-                                <th className="px-6 py-3 font-medium">Complaint</th>
-                                <th className="px-6 py-3 font-medium">Price</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {appointments.length === 0 ? (
-                                <tr>
-                                    <td colSpan={4} className="px-6 py-4 text-muted">
-                                        No appointments for today.
-                                    </td>
-                                </tr>
-                            ) : (
-                                appointments.map((appt, idx) => (
-                                    <tr
-                                        key={appt.id ?? idx}
-                                        className="border-b border-border last:border-0 hover:bg-background transition-colors"
-                                    >
-                                        <td className="px-6 py-4 font-medium">{appt.time}</td>
-                                        <td className="px-6 py-4">{appt.patient_name}</td>
-                                        <td className="px-6 py-4 text-muted">{appt.complaint}</td>
-                                        <td className="px-6 py-4 font-medium">{appt.price}</td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            {isOpen && (
-                <CalendarModal
-                    appointments={calendarAppointments}
-                    onClose={handleClose}
-                    initialFilter={externalFilter}
-                />
-            )}
-        </>
     );
 }

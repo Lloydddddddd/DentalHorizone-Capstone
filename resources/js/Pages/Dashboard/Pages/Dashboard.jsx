@@ -1,13 +1,23 @@
 import React, { useState } from 'react';
-import { Head, usePage } from '@inertiajs/react';
-import StatsCard from '../components/StatsCard';
-import ScheduleTable from '../components/ScheduleTable';
+import { Head, usePage, router } from '@inertiajs/react';
+import StatsCard from "@/Pages/Dashboard/Components/StatsCard";
+import ScheduleTable from "@/Pages/Dashboard/Components/ScheduleTable";
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import dayjs from "dayjs";
 
 export default function Dashboard({ stats, todayAppointments, calendarAppointments }) {
     // null = no filter, or one of: 'upcoming' | 'today' | 'missed'
     const [calendarFilter, setCalendarFilter] = useState(null);
     const [calendarOpen, setCalendarOpen] = useState(false);
+
+    const mappedTodayAppointments = (todayAppointments ?? []).map((appointment) => ({
+        id: appointment.id,
+        next_appointment: appointment.next_appointment
+            ? dayjs(appointment.next_appointment).format("MMM D, YYYY h:mm A")
+            : "–",
+        patient_name: appointment.patient?.patient_name || "–",
+        service: appointment.services?.map(s => s.name).join(", ") || "–",
+    }));
 
     function handleStatClick(filter) {
         // Clicking the same card again clears the filter
@@ -35,8 +45,6 @@ export default function Dashboard({ stats, todayAppointments, calendarAppointmen
                             <StatsCard
                                 title="Total Patients"
                                 value={stats?.total_patients ?? 0}
-                                trend={stats?.total_patients_trend ?? '+0%'}
-                                trendUp={stats?.total_patients_trend_up ?? true}
                                 icon="users"
                                 onClick={() => { window.location.assign('/patients'); }}
                             />
@@ -44,18 +52,13 @@ export default function Dashboard({ stats, todayAppointments, calendarAppointmen
                             <StatsCard
                                 title="Upcoming Appointments"
                                 value={stats?.upcoming_appointments ?? 0}
-                                trend={stats?.upcoming_appointments_trend ?? '+0%'}
-                                trendUp={stats?.upcoming_appointments_trend_up ?? true}
                                 icon="calendar"
-                                active={calendarFilter === 'upcoming'}
-                                onClick={() => handleStatClick('upcoming')}
+                                onClick={() => { router.get(route('appointments.upcoming')); }}
                             />
 
                             <StatsCard
                                 title="Today's Appointments"
                                 value={stats?.todays_appointments ?? 0}
-                                trend={stats?.todays_appointments_trend ?? '+0%'}
-                                trendUp={stats?.todays_appointments_trend_up ?? true}
                                 icon="clock"
                                 active={calendarFilter === 'today'}
                                 onClick={() => handleStatClick('today')}
@@ -64,11 +67,8 @@ export default function Dashboard({ stats, todayAppointments, calendarAppointmen
                             <StatsCard
                                 title="Missed Appointments"
                                 value={stats?.missed_appointments ?? 0}
-                                trend={stats?.missed_appointments_trend ?? '-0%'}
-                                trendUp={stats?.missed_appointments_trend_up ?? false}
                                 icon="alert-triangle"
-                                active={calendarFilter === 'missed'}
-                                onClick={() => handleStatClick('missed')}
+                                onClick={() => { router.get(route('appointments.missed')); }}
                             />
                         </div>
 
@@ -76,7 +76,7 @@ export default function Dashboard({ stats, todayAppointments, calendarAppointmen
                         <div className="grid grid-cols-3 gap-6 flex-1 min-h-0">
                             <div className="col-span-3">
                                 <ScheduleTable
-                                    appointments={todayAppointments ?? []}
+                                    appointments={mappedTodayAppointments}
                                     calendarAppointments={calendarAppointments ?? []}
                                     stats={stats ?? {}}
                                     externalFilter={calendarFilter}

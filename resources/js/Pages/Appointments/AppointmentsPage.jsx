@@ -6,7 +6,10 @@ import SearchFilter from '@/Components/SearchFilter';
 import AppointmentsTable from '@/Pages/Appointments/AppointmentsTable';
 import StatusFilter from "@/Components/StatusFilter";
 
-export default function AppointmentsPage({ appointments, filters, title, routeName }) {
+export default function AppointmentsPage({ appointments, filters, title, routeName}) {
+    const params = new URLSearchParams(window.location.search);
+    const highlightId = params.get('highlight');
+
     const safeFilters = filters || {};
 
     const handleSearchChange = (e) => {
@@ -94,7 +97,7 @@ export default function AppointmentsPage({ appointments, filters, title, routeNa
                     />
                 </div>
 
-                <AppointmentsTable appointments={mappedAppointments} />
+                <AppointmentsTable appointments={mappedAppointments} highlightId={highlightId} />
 
                <div className="flex gap-2 mt-4 justify-center">
                 {appointments.links.map((link, index) => (

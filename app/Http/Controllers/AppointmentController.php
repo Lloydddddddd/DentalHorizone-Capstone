@@ -127,13 +127,13 @@ class AppointmentController extends Controller
         $validated['balance'] = ($validated['debit'] ?? 0) - ($validated['credit'] ?? 0);
 
         // Prevent overlapping schedule for admin-created appointments
-        $conflict = Appointment::where('date_of_visit', $validated['date_of_visit'])
-            ->whereIn('visit_status', ['pending', 'confirmed'])
+        $conflict = Appointment::whereIn('visit_status', ['pending', 'confirmed'])
+            ->where('next_appointment', $validated['next_appointment'])
             ->exists();
 
         if ($conflict) {
             return redirect()->back()->withErrors([
-                'date_of_visit' => 'This time slot is already taken. Please choose another.',
+                'next_appointment' => 'This time slot is already taken. Please choose another.',
             ])->withInput();
         }
 
@@ -230,8 +230,8 @@ class AppointmentController extends Controller
 
         // Prevent overlapping schedule
         $conflict = Appointment::where('id', '!=', $id)
-            ->where('date_of_visit', $validated['date_of_visit'])
             ->whereIn('visit_status', ['pending', 'confirmed'])
+            ->where('next_appointment', $validated['next_appointment'])
             ->exists();
 
         if ($conflict) {
@@ -281,6 +281,18 @@ class AppointmentController extends Controller
         }
 
         $validated['balance'] = ($validated['debit'] ?? 0) - ($validated['credit'] ?? 0);
+
+        // Prevent overlapping schedule when editing
+        $conflict = Appointment::where('id', '!=', $id)
+            ->whereIn('visit_status', ['pending', 'confirmed'])
+            ->where('next_appointment', $validated['next_appointment'])
+            ->exists();
+
+        if ($conflict) {
+            return redirect()->back()->withErrors([
+                'next_appointment' => 'This time slot is already taken. Please choose another.',
+            ])->withInput();
+        }
 
         $appointment = Appointment::findOrFail($id);
         $appointment->update([
