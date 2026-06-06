@@ -6,8 +6,13 @@ import SearchFilter from "@/Components/SearchFilter";
 
 export default function ArchivedIndex({ archivedPatients }) {
     const { props } = usePage();
-    const items = archivedPatients && archivedPatients.data ? archivedPatients.data : [];
-    const csrfToken = props?.csrfToken || document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
+    const items =
+        archivedPatients && archivedPatients.data ? archivedPatients.data : [];
+    const csrfToken =
+        props?.csrfToken ||
+        document
+            .querySelector('meta[name="csrf-token"]')
+            ?.getAttribute("content");
 
     // Search State
     const [search, setSearch] = useState(props?.q || "");
@@ -26,7 +31,7 @@ export default function ArchivedIndex({ archivedPatients }) {
                     preserveState: true,
                     replace: true,
                     only: ["archivedPatients", "flash"],
-                }
+                },
             );
         }, 500);
 
@@ -43,12 +48,14 @@ export default function ArchivedIndex({ archivedPatients }) {
                 preserveState: true,
                 replace: true,
                 only: ["archivedPatients", "flash"],
-            }
+            },
         );
     };
 
     return (
-        <AuthenticatedLayout header={<h2 className="text-xl font-semibold">Patients</h2>}>
+        <AuthenticatedLayout
+            header={<h2 className="text-xl font-semibold">Patients</h2>}
+        >
             <Head title="Archived Patients" />
 
             <div className="p-6">
@@ -83,12 +90,16 @@ export default function ArchivedIndex({ archivedPatients }) {
                         >
                             <SearchFilter
                                 searchValue={search}
-                                onSearchChange={(e) => setSearch(e.target.value)}
+                                onSearchChange={(e) =>
+                                    setSearch(e.target.value)
+                                }
                             />
                             <select
                                 value={sort}
                                 onChange={handleSortChange}
-                                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"
+                                className="rounded-md border border-gray-300 bg-white px-3 py-2 
+               text-sm text-gray-700 min-w-[160px] 
+               focus:outline-none focus:ring-2 focus:ring-blue-200"
                             >
                                 <option value="name">Name (A–Z)</option>
                                 <option value="name_desc">Name (Z–A)</option>
@@ -108,43 +119,80 @@ export default function ArchivedIndex({ archivedPatients }) {
                     <table className="min-w-full table-auto border border-gray-300 divide-y divide-gray-300">
                         <thead className="bg-orange-50">
                             <tr>
-                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">Name</th>
-                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">Age</th>
-                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">Occupation</th>
-                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">Contact</th>
-                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">Email</th>
-                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">Archived At</th>
-                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">Actions</th>
+                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">
+                                    Name
+                                </th>
+                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">
+                                    Age
+                                </th>
+                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">
+                                    Occupation
+                                </th>
+                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">
+                                    Contact
+                                </th>
+                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">
+                                    Email
+                                </th>
+                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">
+                                    Archived At
+                                </th>
+                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-300">
                             {items.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-6 py-8 text-center text-sm text-gray-500">
+                                    <td
+                                        colSpan={7}
+                                        className="px-6 py-8 text-center text-sm text-gray-500"
+                                    >
                                         No archived patients found.
                                     </td>
                                 </tr>
                             ) : (
                                 items.map((a) => (
-                                    <tr key={a.id} className="hover:bg-gray-50 transition">
-                                        <td className="px-4 py-3 text-sm font-medium">{a.patient_name}</td>
-                                        <td className="px-4 py-3 text-sm">{a.age}</td>
-                                        <td className="px-4 py-3 text-sm">{a.occupation || "-"}</td>
-                                        <td className="px-4 py-3 text-sm">{a.telephone}</td>
-                                        <td className="px-4 py-3 text-sm">{a.email || "-"}</td>
+                                    <tr
+                                        key={a.id}
+                                        className="hover:bg-gray-50 transition"
+                                    >
+                                        <td className="px-4 py-3 text-sm font-medium">
+                                            {a.patient_name}
+                                        </td>
+                                        <td className="px-4 py-3 text-sm">
+                                            {a.age}
+                                        </td>
+                                        <td className="px-4 py-3 text-sm">
+                                            {a.occupation || "-"}
+                                        </td>
+                                        <td className="px-4 py-3 text-sm">
+                                            {a.telephone}
+                                        </td>
+                                        <td className="px-4 py-3 text-sm">
+                                            {a.email || "-"}
+                                        </td>
                                         <td className="px-4 py-3 text-sm text-gray-500">
-                                            {a.created_at 
-                                                ? new Date(a.created_at).toLocaleDateString('en-US', {
-                                                    year: 'numeric',
-                                                    month: 'short',
-                                                    day: 'numeric'
-                                                  })
-                                                : '-'
-                                            }
+                                            {a.created_at
+                                                ? new Date(
+                                                      a.created_at,
+                                                  ).toLocaleDateString(
+                                                      "en-US",
+                                                      {
+                                                          year: "numeric",
+                                                          month: "short",
+                                                          day: "numeric",
+                                                      },
+                                                  )
+                                                : "-"}
                                         </td>
                                         <td className="px-4 py-3 text-sm text-left space-x-4">
                                             <button
-                                                onClick={() => { setSelected(a); setShowRestoreModal(true); }}
+                                                onClick={() => {
+                                                    setSelected(a);
+                                                    setShowRestoreModal(true);
+                                                }}
                                                 className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
                                             >
                                                 Restore
@@ -158,25 +206,42 @@ export default function ArchivedIndex({ archivedPatients }) {
                 </div>
 
                 {/* Restore Modal */}
-                <Modal show={showRestoreModal} onClose={() => setShowRestoreModal(false)}>
+                <Modal
+                    show={showRestoreModal}
+                    onClose={() => setShowRestoreModal(false)}
+                >
                     <div className="p-6">
-                        <h3 className="text-lg font-medium text-gray-900">Restore Patient</h3>
+                        <h3 className="text-lg font-medium text-gray-900">
+                            Restore Patient
+                        </h3>
                         <p className="mt-2 text-sm text-gray-600">
-                            Are you sure you want to restore <strong>{selected?.patient_name}</strong>?
+                            Are you sure you want to restore{" "}
+                            <strong>{selected?.patient_name}</strong>?
                         </p>
                         <div className="mt-6 flex justify-end space-x-3">
-                            <button 
-                                onClick={() => setShowRestoreModal(false)} 
+                            <button
+                                onClick={() => setShowRestoreModal(false)}
                                 className="px-4 py-2 border rounded-md hover:bg-gray-50"
                             >
                                 Cancel
                             </button>
-                            <form 
-                                method="POST" 
-                                action={selected ? route('archived-patients.restore', selected.id) : '#'}
+                            <form
+                                method="POST"
+                                action={
+                                    selected
+                                        ? route(
+                                              "archived-patients.restore",
+                                              selected.id,
+                                          )
+                                        : "#"
+                                }
                             >
-                                <input type="hidden" name="_token" value={csrfToken} />
-                                <button 
+                                <input
+                                    type="hidden"
+                                    name="_token"
+                                    value={csrfToken}
+                                />
+                                <button
                                     type="submit"
                                     className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
                                 >

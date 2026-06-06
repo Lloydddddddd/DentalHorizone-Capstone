@@ -25,11 +25,11 @@ export default function Index({ patients, totalPatients }) {
     const [showApptModal, setShowApptModal] = useState(false);
     const [apptPatient, setApptPatient] = useState(null);
 
-    // Search functionality
+    // Search + Sort
     const [search, setSearch] = useState(props?.q || "");
     const [sort, setSort] = useState(props?.sort || "name");
 
-    // Debounced search
+    // Debounced live search (keeps UX smooth)
     useEffect(() => {
         const handler = setTimeout(() => {
             router.get(
@@ -44,11 +44,12 @@ export default function Index({ patients, totalPatients }) {
         }, 500);
 
         return () => clearTimeout(handler);
-    }, [search]);
+    }, [search, sort]); // Added sort dependency for completeness
 
     const handleSortChange = (event) => {
         const value = event.target.value;
         setSort(value);
+        // Immediate sort update (no debounce needed)
         router.get(
             route("patients.index"),
             { q: search || undefined, sort: value || undefined },
@@ -106,41 +107,47 @@ export default function Index({ patients, totalPatients }) {
                     </Link>
                 </div>
 
-                {/* Search + Add Button */}
+                {/* Refactored Search + Filters + Add */}
                 <div className="flex items-center justify-between gap-4 mb-6">
-                    <div className="flex-1 flex items-center space-x-3">
+                    <div className="flex-1 flex items-center gap-3">
                         <form
                             onSubmit={(e) => e.preventDefault()}
-                            className="flex items-center space-x-2 flex-1"
+                            className="flex items-center gap-3 flex-1"
                         >
                             <SearchFilter
                                 searchValue={search}
-                                onSearchChange={(e) => setSearch(e.target.value)}
+                                onSearchChange={(e) =>
+                                    setSearch(e.target.value)
+                                }
+                                placeholder="Search by patient name..."
                             />
                             <select
                                 value={sort}
                                 onChange={handleSortChange}
-                                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"
+                                className="rounded-md border border-gray-300 bg-white px-3 py-2 
+               text-sm text-gray-700 min-w-[160px] 
+               focus:outline-none focus:ring-2 focus:ring-blue-200"
                             >
                                 <option value="name">Name (A–Z)</option>
                                 <option value="name_desc">Name (Z–A)</option>
                                 <option value="date">Date Added</option>
                             </select>
+                            {/* Optional explicit search button - can be removed if live search suffices */}
                             <button
                                 type="submit"
-                                className="rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 transition"
+                                className="rounded-md bg-indigo-600 px-5 py-2 text-sm text-white hover:bg-indigo-700 transition-colors whitespace-nowrap"
                             >
                                 Search
                             </button>
                         </form>
                     </div>
 
-                    {/* Add Patient */}
+                    {/* Add Patient Button */}
                     <button
                         onClick={() => setShowAddModal(true)}
-                        className={`inline-flex items-center rounded-md border border-transparent bg-green-700 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition duration-150 ease-in-out hover:bg-gray-700 focus:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 active:bg-gray-900`}
+                        className="inline-flex items-center rounded-md border border-transparent bg-green-700 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition duration-150 ease-in-out hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
-                        Add Patient
+                        + Add Patient
                     </button>
                 </div>
 
@@ -167,7 +174,7 @@ export default function Index({ patients, totalPatients }) {
                                     Status
                                 </th>
                                 <th className="px-5 py-2 text-center text-xs font-bold text-blue-900 border-b-2 border-orange-400">
-                                Actions
+                                    Actions
                                 </th>
                             </tr>
                         </thead>
@@ -208,7 +215,7 @@ export default function Index({ patients, totalPatients }) {
                                             Active
                                         </span>
                                     </td>
-                                    
+
                                     <td className="px-4 py-3 text-sm text-right space-x-4">
                                         <button
                                             onClick={() => {
@@ -235,7 +242,6 @@ export default function Index({ patients, totalPatients }) {
                                             Archive
                                         </button>
                                     </td>
-                                    
                                 </tr>
                             ))}
                         </tbody>
@@ -330,8 +336,6 @@ export default function Index({ patients, totalPatients }) {
                         ? `Page ${patients.meta.current_page} of ${patients.meta.last_page}`
                         : ""}
                 </div>
-
-                
 
                 {/* Edit modal placeholder removed (kept HEAD behavior: controller-based edit exists elsewhere) */}
             </div>
