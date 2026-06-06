@@ -4,6 +4,7 @@ import { Head, Link, usePage, router } from "@inertiajs/react";
 import Modal from "@/Components/Modal";
 import InlineForm from "@/Pages/Patients/InlineForm";
 import AddAppointmentPopup from "@/Components/AddAppointmentPopup";
+import SearchFilter from "@/Components/SearchFilter";
 
 export default function Index({ patients, totalPatients }) {
     const { props } = usePage();
@@ -24,14 +25,16 @@ export default function Index({ patients, totalPatients }) {
     const [showApptModal, setShowApptModal] = useState(false);
     const [apptPatient, setApptPatient] = useState(null);
 
-    // Debounced search
-    const [search, setSearch] = useState("");
+    // Search functionality
+    const [search, setSearch] = useState(props?.q || "");
+    const [sort, setSort] = useState(props?.sort || "name");
 
+    // Debounced search
     useEffect(() => {
         const handler = setTimeout(() => {
             router.get(
                 route("patients.index"),
-                { q: search || undefined },
+                { q: search || undefined, sort: sort || undefined },
                 {
                     preserveState: true,
                     replace: true,
@@ -42,6 +45,20 @@ export default function Index({ patients, totalPatients }) {
 
         return () => clearTimeout(handler);
     }, [search]);
+
+    const handleSortChange = (event) => {
+        const value = event.target.value;
+        setSort(value);
+        router.get(
+            route("patients.index"),
+            { q: search || undefined, sort: value || undefined },
+            {
+                preserveState: true,
+                replace: true,
+                only: ["patients", "flash"],
+            },
+        );
+    };
 
     const openEditModal = (patient) => {
         setEditingPatient(patient);
@@ -89,22 +106,26 @@ export default function Index({ patients, totalPatients }) {
                     </Link>
                 </div>
 
-                {/* Search and Add Button */}
-                <div className="flex items-center justify-between mb-6">
+                {/* Search + Add Button */}
+                <div className="flex items-center justify-between gap-4 mb-6">
                     <div className="flex-1 flex items-center space-x-3">
                         <form
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                            }}
-                            className="flex items-center space-x-2 w-full max-w-lg"
+                            onSubmit={(e) => e.preventDefault()}
+                            className="flex items-center space-x-2 flex-1"
                         >
-                            <input
-                                type="text"
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Search name, phone, email or occupation"
-                                className="w-full rounded-md border px-3 py-2 text-sm placeholder-gray-400 focus:ring-indigo-500 focus:border-indigo-500"
+                            <SearchFilter
+                                searchValue={search}
+                                onSearchChange={(e) => setSearch(e.target.value)}
                             />
+                            <select
+                                value={sort}
+                                onChange={handleSortChange}
+                                className="rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700"
+                            >
+                                <option value="name">Name (A–Z)</option>
+                                <option value="name_desc">Name (Z–A)</option>
+                                <option value="date">Date Added</option>
+                            </select>
                             <button
                                 type="submit"
                                 className="rounded-md bg-indigo-600 px-4 py-2 text-sm text-white hover:bg-indigo-700 transition"

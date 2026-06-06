@@ -16,9 +16,20 @@ class PatientController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Patient::orderBy('patient_name');
+        $search = $request->input('q');
+        $sort = $request->input('sort', 'name');
 
-        if ($search = $request->input('q')) {
+        $query = Patient::query();
+
+        if ($sort === 'date') {
+            $query->orderBy('created_at', 'desc');
+        } elseif ($sort === 'name_desc') {
+            $query->orderBy('patient_name', 'desc');
+        } else {
+            $query->orderBy('patient_name', 'asc');
+        }
+
+        if ($search) {
             $query->where(function ($q) use ($search) {
                 $q->where('patient_name', 'like', "%{$search}%")
                   ->orWhere('telephone', 'like', "%{$search}%")
@@ -35,6 +46,8 @@ class PatientController extends Controller
         return Inertia::render('Patients/Index', [
             'patients'      => $patients,
             'totalPatients' => $totalPatients,
+            'q'             => $search,
+            'sort'          => $sort,
         ]);
     }
 
@@ -163,11 +176,35 @@ class PatientController extends Controller
     /**
      * Display a listing of archived patients.
      */
-    public function archivedIndex()
+    public function archivedIndex(Request $request)
     {
-        $archived = ArchivedPatient::orderBy('patient_name')->paginate(20);
+        $search = $request->input('q');
+        $sort = $request->input('sort', 'name');
+
+        $query = ArchivedPatient::query();
+
+        if ($sort === 'date') {
+            $query->orderBy('created_at', 'desc');
+        } elseif ($sort === 'name_desc') {
+            $query->orderBy('patient_name', 'desc');
+        } else {
+            $query->orderBy('patient_name', 'asc');
+        }
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('patient_name', 'like', "%{$search}%")
+                  ->orWhere('telephone', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('occupation', 'like', "%{$search}%");
+            });
+        }
+
+        $archived = $query->paginate(20)->withQueryString();
         return Inertia::render('ArchivedPatients/Index', [
             'archivedPatients' => $archived,
+            'q' => $search,
+            'sort' => $sort,
         ]);
     }
 
