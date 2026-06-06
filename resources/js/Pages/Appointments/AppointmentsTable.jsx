@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { router } from "@inertiajs/react";
 import axios from "axios";
 import AppointmentsTableViewButtonModal from "@/Pages/Appointments/Components/AppointmentsTableViewModal";
 import AppointmentsTableRescheduleButton from "@/Pages/Appointments/Components/AppointmentsTableRescheduleModal";
 import AddAppointmentPopup from "@/Components/AddAppointmentPopup";
 
-export default function AppointmentsTable({ appointments }) {
+export default function AppointmentsTable({ appointments, highlightId }) {
   const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const rowRefs = useRef({});
 
   useEffect(() => {
     const handleEsc = (e) => {
@@ -15,6 +16,15 @@ export default function AppointmentsTable({ appointments }) {
     window.addEventListener("keydown", handleEsc);
     return () => window.removeEventListener("keydown", handleEsc);
   }, []);
+
+  useEffect(() => {
+    if (highlightId && rowRefs.current[highlightId]) {
+      rowRefs.current[highlightId].scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+    }
+  }, [highlightId]);
 
   const handleCancel = async (id) => {
     console.log("Cancelling appointment ID:", id); // Debug
@@ -57,7 +67,12 @@ export default function AppointmentsTable({ appointments }) {
           )}
 
           {appointments.map((appointment) => (
-            <tr key={appointment.id} className="hover:bg-gray-50 transition">
+            <tr key={appointment.id} ref={(el) => (rowRefs.current[appointment.id] = el)} className={`last:border-0
+                ${highlightId == appointment.id 
+                  ? 'bg-yellow-100 ring-2 ring-yellow-400' 
+                  : 'hover:bg-gray-50 transition'}
+              `}
+            >
               <td className="px-4 py-3 text-sm">{appointment.date_of_visit}</td>
               <td className="px-4 py-3 text-sm">{appointment.next_appointment || "–"}</td>
               <td className="px-4 py-3 text-sm font-medium">{appointment.patient_name}</td>
