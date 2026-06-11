@@ -43,7 +43,9 @@ class AppointmentController extends Controller
 
         $query = Appointment::with(['patient', 'services'])
             ->whereNotNull('next_appointment')
-            ->where('next_appointment', '>', $now)
+            ->where(function ($q) use ($now) {
+                $q->where('next_appointment', '>', $now); // future
+            })
             ->where('visit_status', '!=', 'cancelled');
 
         if ($request->filled('search')) {
@@ -73,7 +75,9 @@ class AppointmentController extends Controller
 
         $query = Appointment::with(['patient', 'services'])
             ->whereNotNull('next_appointment')
-            ->where('next_appointment', '<', $now)
+            ->where(function ($q) use ($now) {
+                $q->where('next_appointment', '<', $now); // past
+            })
             ->where('visit_status', '!=', 'cancelled');
 
         if ($request->filled('search')) {
