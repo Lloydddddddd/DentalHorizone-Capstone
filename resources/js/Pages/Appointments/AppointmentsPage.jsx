@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
 import dayjs from 'dayjs';
@@ -11,14 +11,25 @@ export default function AppointmentsPage({ appointments, filters, title, routeNa
     const highlightId = params.get('highlight');
 
     const safeFilters = filters || {};
+    const searchTimeout = useRef(null);
+
+    const [searchValue, setSearchValue] = useState(safeFilters.search || "");
 
     const handleSearchChange = (e) => {
-        router.get(route(routeName), { 
-            search: e.target.value, 
-            status: safeFilters.status,
-            sort: safeFilters.sort,
-            direction: safeFilters.direction
-        }, { preserveState: true, replace: true });
+        const value = e.target.value;
+
+        // clear any pending request
+        if (searchTimeout.current) clearTimeout(searchTimeout.current);
+
+        // debounce: wait 300ms after typing stops
+        searchTimeout.current = setTimeout(() => {
+            router.get(route(routeName), { 
+                search: value, 
+                status: safeFilters.status,
+                sort: safeFilters.sort,
+                direction: safeFilters.direction
+            }, { preserveState: true, replace: true });
+        }, 300);
     };
 
     // Truncate helpers
@@ -76,24 +87,25 @@ export default function AppointmentsPage({ appointments, filters, title, routeNa
 
             <div className="p-8 space-y-8 bg-gray-100">
 
-                <div className="flex gap-1 ">
-                    <div className="flex-1">
+                <div className="flex items-center gap-1">
                     <SearchFilter
-                        searchValue={safeFilters.search}
-                        onSearchChange={handleSearchChange}
+                        searchValue={searchValue}
+                        onSearchChange={(e) => {
+                        setSearchValue(e.target.value);
+                        handleSearchChange(e);
+                        }}
                     />
-                    </div>
 
                     <StatusFilter
-                    value={safeFilters.status}
-                    onChange={(status) =>
+                        value={safeFilters.status}
+                        onChange={(status) =>
                         router.get(route(routeName), {
-                        search: safeFilters.search,
-                        status,
-                        sort: safeFilters.sort,
-                        direction: safeFilters.direction,
+                            search: searchValue,
+                            status,
+                            sort: safeFilters.sort,
+                            direction: safeFilters.direction,
                         }, { preserveState: true, replace: true })
-                    }
+                        }
                     />
                 </div>
 

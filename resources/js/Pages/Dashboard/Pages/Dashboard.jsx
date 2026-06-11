@@ -15,8 +15,8 @@ export default function Dashboard({ stats, todayAppointments, calendarAppointmen
         next_appointment: appointment.next_appointment
             ? dayjs(appointment.next_appointment).format("MMM D, YYYY h:mm A")
             : "–",
-        patient_name: appointment.patient?.patient_name || "–",
-        service: appointment.services?.map(s => s.name).join(", ") || "–",
+        patient_name: appointment.patient_name || "–",
+        service: appointment.service || "–",  
     }));
 
     function handleStatClick(filter) {

@@ -33,7 +33,7 @@ export default function ScheduleTable({
         <>
             <div className="bg-surface border border-border rounded flex flex-col h-full">
                 <div className="px-6 py-5 border-b border-border flex items-center justify-between">
-                    <h2 className="text-lg font-bold font-headings">Today's Action</h2>
+                    <h2 className="text-lg font-bold font-headings">Today's Appointments</h2>
                     <button
                         className={`text-sm font-medium px-3 py-1.5 rounded transition-colors text-white ${buttonColor}`}
                         type="button"

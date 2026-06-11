@@ -24,28 +24,24 @@ const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
  * Resolve an appointment's canonical status.
  * Priority: explicit visit_status field → date comparison fallback.
  */
-function getApptStatus(appt, todayStr) {
-    const vs = (appt.visit_status ?? '').toLowerCase();
+function getApptStatus(appt) {
+    if (!appt.next_appointment) return null;
 
-    if (vs === 'missed')   return 'missed';
-    if (vs === 'upcoming') return 'upcoming';
-    if (vs === 'today')    return 'today';
+    const now = new Date();
+    const apptDate = new Date(appt.next_appointment);
 
-    // Fallback: use the date field
-    if (appt.date) {
-        if (appt.date < todayStr) return 'missed';
-        if (appt.date === todayStr) return 'today';
-        if (appt.date > todayStr)  return 'upcoming';
-    }
+    if (apptDate.toDateString() === now.toDateString()) return "today";
+    if (apptDate > now) return "upcoming";
+    if (apptDate < now) return "missed";
 
-    return 'today';
+    return null;
 }
 
-function dayBadgeColor(dayAppts, todayStr) {
-    const statuses = dayAppts.map((a) => getApptStatus(a, todayStr));
+function dayBadgeColor(dayAppts) {
+    const statuses = dayAppts.map((a) => getApptStatus(a));
     if (statuses.includes('missed'))   return 'missed';
-    if (statuses.includes('today'))    return 'today';
     if (statuses.includes('upcoming')) return 'upcoming';
+    if (statuses.includes('today'))    return 'today';
     return null;
 }
 
@@ -67,29 +63,51 @@ export default function CalendarModal({ appointments, onClose, initialFilter = n
     // When a filter activates, jump to the first month that has matching appointments
     useEffect(() => {
         if (!activeFilter) return;
-        const filtered = appointments.filter(a => getApptStatus(a, todayStr) === activeFilter);
-        if (filtered.length === 0) return;
-        // Sort ascending and pick first
-        const sorted = [...filtered].sort((a, b) => (a.date ?? '').localeCompare(b.date ?? ''));
-        const firstDate = sorted[0].date;
-        if (firstDate) {
-            const d = new Date(firstDate);
-            setViewYear(d.getFullYear());
-            setViewMonth(d.getMonth());
+
+        if (activeFilter === "today") {
+            // Special case: auto-focus on today
+            setViewYear(today.getFullYear());
+            setViewMonth(today.getMonth());
+            setSelectedDay(today.getDate());
+            return;
         }
+
+        // For missed/upcoming: don't auto-focus
+        setSelectedDay(null);
     }, [activeFilter]);
 
     // Apply filter to the full appointment list
     const visibleAppointments = activeFilter
-        ? appointments.filter(a => getApptStatus(a, todayStr) === activeFilter)
-        : appointments;
+    ? appointments.filter(a => {
+            if (a.visit_status !== "pending") return false;
+            const apptDate = new Date(a.next_appointment);
+
+            if (activeFilter === "today") {
+                return apptDate.toDateString() === today.toDateString();
+            }
+            if (activeFilter === "missed") {
+                return apptDate < today ||
+                    (apptDate.toDateString() === today.toDateString() && apptDate < today);
+            }
+            if (activeFilter === "upcoming") {
+                return apptDate > today ||
+                    (apptDate.toDateString() === today.toDateString() && apptDate > today);
+            }
+            return false;
+        })
+    : appointments.filter(a => a.visit_status === "pending");
 
     // Group by date
     const apptsByDate = {};
     visibleAppointments.forEach((appt) => {
-        const key = appt.date ?? todayStr;
-        if (!apptsByDate[key]) apptsByDate[key] = [];
-        apptsByDate[key].push(appt);
+        const raw = appt.next_appointment_raw || appt.next_appointment;
+        const parsed = new Date(raw);
+
+        if (!isNaN(parsed)) {   // only group if valid date
+            const key = parsed.toISOString().slice(0, 10);
+            if (!apptsByDate[key]) apptsByDate[key] = [];
+            apptsByDate[key].push(appt);
+        }
     });
 
     const daysInMonth = getDaysInMonth(viewYear, viewMonth);
@@ -114,13 +132,34 @@ export default function CalendarModal({ appointments, onClose, initialFilter = n
     const selectedDateStr = selectedDay
         ? `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`
         : null;
-    const selectedAppts = selectedDateStr ? (apptsByDate[selectedDateStr] ?? []) : [];
+
+    const selectedAppts =
+        activeFilter === "today"
+            ? apptsByDate[todayStr] ?? []
+            : selectedDateStr
+                ? apptsByDate[selectedDateStr] ?? []
+                : [];
 
     // Counts for filter pills
     const counts = {
-        missed:   appointments.filter(a => getApptStatus(a, todayStr) === 'missed').length,
-        today:    appointments.filter(a => getApptStatus(a, todayStr) === 'today').length,
-        upcoming: appointments.filter(a => getApptStatus(a, todayStr) === 'upcoming').length,
+        missed: appointments.filter(a => {
+            if (a.visit_status !== "pending") return false;
+            const apptDate = new Date(a.next_appointment);
+            return apptDate < today ||
+                (apptDate.toDateString() === today.toDateString() && apptDate < today);
+        }).length,
+
+        today: appointments.filter(a => {
+            if (a.visit_status !== "pending") return false;
+            return new Date(a.next_appointment).toDateString() === today.toDateString();
+        }).length,
+
+        upcoming: appointments.filter(a => {
+            if (a.visit_status !== "pending") return false;
+            const apptDate = new Date(a.next_appointment);
+            return apptDate > today ||
+                (apptDate.toDateString() === today.toDateString() && apptDate > today);
+        }).length,
     };
 
     return (
@@ -196,7 +235,7 @@ export default function CalendarModal({ appointments, onClose, initialFilter = n
 
                             const dateStr  = `${viewYear}-${String(viewMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                             const dayAppts = apptsByDate[dateStr] ?? [];
-                            const badge    = dayBadgeColor(dayAppts, todayStr);
+                            const badge    = dayBadgeColor(dayAppts);
                             const isToday  = dateStr === todayStr;
                             const isSel    = day === selectedDay;
 
@@ -242,12 +281,13 @@ export default function CalendarModal({ appointments, onClose, initialFilter = n
                                             >
                                                 <div className="flex flex-col gap-0.5">
                                                     <span className="font-semibold">{appt.patient_name}</span>
-                                                    <span className="text-xs opacity-70">{appt.complaint}</span>
+                                                    <span className="text-xs opacity-70" title={appt.fullService}>
+                                                        {appt.service || "No service"}
+                                                    </span>
                                                     <div className="mt-1 text-xs text-gray-500">
                                                         {appt.occupation ? <span>{appt.occupation}</span> : null}
                                                         {appt.email ? <span className="ml-2">{appt.email}</span> : null}
                                                     </div>
-
                                                 </div>
                                                 <div className="flex flex-col items-end gap-1 ml-4 shrink-0">
                                                     <span className="font-medium text-xs">{appt.time}</span>
