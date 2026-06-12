@@ -34,7 +34,7 @@ export default function StatsCard({ title, value, icon, onClick, active = false 
             `}
         >
             <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-muted">{title}</span>
+                <span className="text-sm font-medium text-muted-foreground">{title}</span>
                 <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors
                     ${active ? 'bg-indigo-600 text-white' : 'bg-secondary text-secondary-fg'}`}>
                     <Icon size={20} />

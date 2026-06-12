@@ -46,7 +46,7 @@ export default function ScheduleTable({
                 <div className="overflow-auto">
                     <table className="w-full text-left border-collapse text-sm">
                         <thead>
-                            <tr className="border-b border-border text-muted">
+                            <tr className="border-b border-border text-muted-foreground">
                                 <th className="px-6 py-3 font-medium">Next Appointment</th>
                                 <th className="px-6 py-3 font-medium">Name</th>
                                 <th className="px-6 py-3 font-medium">Service</th>

@@ -1,21 +1,39 @@
-import defaultTheme from 'tailwindcss/defaultTheme';
-import forms from '@tailwindcss/forms';
+import defaultTheme from "tailwindcss/defaultTheme";
+import forms from "@tailwindcss/forms";
 
 /** @type {import('tailwindcss').Config} */
 export default {
     darkMode: ["class"],
     content: [
-        './vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php',
-        './storage/framework/views/*.php',
-        './resources/views/**/*.blade.php',
-        './resources/js/**/*.jsx',
-        './resources/js/**/*.tsx',
+        "./vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php",
+        "./storage/framework/views/*.php",
+        "./resources/views/**/*.blade.php",
+        "./resources/js/**/*.jsx",
+        "./resources/js/**/*.tsx",
     ],
+
+    colors: {
+        surface: "hsl(var(--card))",
+        border: "hsl(var(--border))",
+        muted: "hsl(var(--muted-foreground))",
+        foreground: "hsl(var(--card-foreground))",
+        secondary: {
+            DEFAULT: "hsl(var(--secondary))",
+            fg: "hsl(var(--secondary-foreground))",
+        },
+    },
+    fontFamily: {
+        headings: ["inherit"],
+    },
 
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Geist Variable', 'Figtree', ...defaultTheme.fontFamily.sans],
+                sans: [
+                    "Geist Variable",
+                    "Figtree",
+                    ...defaultTheme.fontFamily.sans,
+                ],
             },
             colors: {
                 border: "hsl(var(--border))",

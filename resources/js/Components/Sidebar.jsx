@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link, usePage } from '@inertiajs/react';
+import { ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 
 export default function Sidebar() {
     const { url } = usePage();
@@ -77,7 +78,7 @@ export default function Sidebar() {
             <div className="p-4 border-b border-gray-100">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-2xl bg-primary text-white flex items-center justify-center font-bold text-xl shadow-sm flex-shrink-0">
+                        <div className="w-9 h-9 rounded-2xl bg-blue-900 text-white flex items-center justify-center font-bold text-xl shadow-sm flex-shrink-0">
                             DH
                         </div>
                         {sidebarOpen && (
@@ -94,7 +95,7 @@ export default function Sidebar() {
                         className="p-2 rounded-xl hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-all flex-shrink-0 text-2xl leading-none"
                         title={sidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
                     >
-                        {sidebarOpen ? '◀' : '▶'}
+                        {sidebarOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
                     </button>
                 </div>
             </div>
@@ -113,7 +114,7 @@ export default function Sidebar() {
                                     onClick={() => setAppointmentsOpen((prev) => !prev)}
                                     className={`group flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all relative ${
                                         isActiveParent
-                                            ? 'bg-primary text-white shadow-md'
+                                            ? 'bg-blue-900 text-white shadow-md'
                                             : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                                     } ${sidebarOpen ? '' : 'justify-center'}`}
                                     title={sidebarOpen ? '' : item.label}
@@ -125,7 +126,7 @@ export default function Sidebar() {
                                     
                                     {sidebarOpen && (
                                         <span className="ml-auto text-xs transition-transform duration-200">
-                                            {appointmentsOpen ? '▼' : '▶'}
+                                            {appointmentsOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                                         </span>
                                     )}
                                 </button>
@@ -140,7 +141,7 @@ export default function Sidebar() {
                                                     href={child.href}
                                                     className={`flex items-center px-4 py-2.5 rounded-2xl text-sm transition-all ${
                                                         active
-                                                            ? 'bg-primary/10 text-primary font-semibold'
+                                                            ? 'bg-blue-900/10 text-primary font-semibold'
                                                             : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                                                     }`}
                                                 >
@@ -161,7 +162,7 @@ export default function Sidebar() {
                             href={item.href}
                             className={`group flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition-all relative ${
                                 active
-                                    ? 'bg-primary text-white shadow-md'
+                                    ? 'bg-blue-900 text-white shadow-md'
                                     : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
                             } ${sidebarOpen ? '' : 'justify-center'}`}
                             title={sidebarOpen ? '' : item.label}
