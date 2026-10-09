@@ -14,7 +14,7 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
-        User::create([
+        User::updateOrCreate([
             'name' => 'Admin',
             'username' => 'Admin',
             'email' => 'Admin@DentalHorizone.com',
