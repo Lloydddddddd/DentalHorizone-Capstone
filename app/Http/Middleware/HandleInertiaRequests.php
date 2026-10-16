@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -34,6 +35,10 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            // Badge on the sidebar's "Appointments" item. Only queried for signed-in users.
+            'pendingAppointments' => fn () => $request->user()
+                ? DB::table('appointments')->where('visit_status', 'pending')->count()
+                : 0,
         ];
     }
 }

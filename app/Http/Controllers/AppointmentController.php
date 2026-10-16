@@ -4,17 +4,28 @@ namespace App\Http\Controllers;
 
 use App\Models\Appointment;
 use App\Models\Patient;
+use App\Models\Service;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
 class AppointmentController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $query = Appointment::with(['patient', 'services']);
+        $now = Carbon::now();
+
+        // Tab filter from the All / Upcoming / Missed pills
+        $tab = $request->input('tab');
+        if ($tab === 'upcoming') {
+            $query->whereNotNull('next_appointment')
+                  ->where('next_appointment', '>', $now)
+                  ->where('visit_status', '!=', 'cancelled');
+        } elseif ($tab === 'missed') {
+            $query->whereNotNull('next_appointment')
+                  ->where('next_appointment', '<', $now)
+                  ->where('visit_status', '!=', 'cancelled');
+        }
 
         if ($request->filled('search')) {
             $search = $request->input('search');
@@ -27,13 +38,17 @@ class AppointmentController extends Controller
             $query->where('visit_status', $request->input('status'));
         }
 
-        $query->orderBy('created_at', 'desc');
+        $query->orderBy('next_appointment', 'desc');
 
         $appointments = $query->paginate(10)->withQueryString();
+        $appointments->through(fn (Appointment $a) => $this->mapAppointment($a));
 
         return inertia('Appointments/Pages/Index', [
-            'appointments' => $appointments,
-            'filters' => $request->only(['search', 'status', 'sort', 'direction']),
+            'appointments'     => $appointments,
+            'appointmentStats' => $this->buildStats(),
+            'patients'         => $this->patientOptions(),
+            'services'         => $this->serviceOptions(),
+            'filters'          => $request->only(['search', 'status', 'tab', 'sort', 'direction']),
         ]);
     }
 
@@ -62,10 +77,14 @@ class AppointmentController extends Controller
         $appointments = $query->orderBy('next_appointment', 'asc')
             ->paginate(10)
             ->withQueryString();
+        $appointments->through(fn (Appointment $a) => $this->mapAppointment($a));
 
         return inertia('Appointments/Pages/Upcoming', [
-            'appointments' => $appointments,
-            'filters' => $request->only(['search', 'status']),
+            'appointments'     => $appointments,
+            'appointmentStats' => $this->buildStats(),
+            'patients'         => $this->patientOptions(),
+            'services'         => $this->serviceOptions(),
+            'filters'          => $request->only(['search', 'status']),
         ]);
     }
 
@@ -94,11 +113,117 @@ class AppointmentController extends Controller
         $appointments = $query->orderBy('next_appointment', 'desc')
             ->paginate(10)
             ->withQueryString();
+        $appointments->through(fn (Appointment $a) => $this->mapAppointment($a));
 
         return inertia('Appointments/Pages/Missed', [
-            'appointments' => $appointments,
-            'filters' => $request->only(['search', 'status']),
+            'appointments'     => $appointments,
+            'appointmentStats' => $this->buildStats(),
+            'patients'         => $this->patientOptions(),
+            'services'         => $this->serviceOptions(),
+            'filters'          => $request->only(['search', 'status']),
         ]);
+    }
+
+    /**
+     * Shape a single Appointment row for the front-end table + modals.
+     * Columns follow the appointments migration; related data is flattened.
+     */
+    protected function mapAppointment(Appointment $appt): array
+    {
+        // Raw values (before Carbon casts) so the front end can format timezones itself.
+        $rawNextAppointment = $appt->getRawOriginal('next_appointment');
+        $rawDateOfVisit     = $appt->getRawOriginal('date_of_visit');
+
+        // Services come from the pivot; fall back to em-dash when nothing is attached.
+        $serviceNames = $appt->services->isNotEmpty()
+            ? $appt->services->pluck('name')->join(', ')
+            : '—';
+
+        // Balance may be null in the DB; default to 0.00 so it doesn't render as "—".
+        $balance = is_null($appt->balance) ? 0.0 : (float) $appt->balance;
+
+        return [
+            // ── Direct columns from the appointments table ────────────
+            'id'                   => $appt->id,
+            'patient_id'           => $appt->patient_id,
+            'complaint'            => $appt->complaint,
+            'date_of_visit'        => $rawDateOfVisit,
+            'next_appointment'     => $rawNextAppointment,
+            'next_appointment_raw' => $rawNextAppointment ?: $rawDateOfVisit,
+            'visit_status'         => $appt->visit_status,
+            'appointment_status'   => $appt->appointment_status ?? $appt->visit_status,
+            'note'                 => $appt->note,
+            'debit'                => (float) $appt->debit,
+            'credit'               => (float) $appt->credit,
+            'balance'              => $balance,
+
+            // ── Related data flattened for the table ──────────────────
+            'patient_name'         => $appt->patient?->patient_name ?? '—',
+            'service'              => $serviceNames,
+
+            // ── Aliases the details modal reads ───────────────────────
+            'fullComplaint'        => $appt->complaint,
+            'fullNote'             => $appt->note,
+        ];
+    }
+
+    /**
+     * Compute the counts shown in the stats bar across all views.
+     *
+     * Today        — every non-cancelled appointment whose next_appointment is today
+     * Remaining    — today's pending/confirmed appointments still in the future
+     * Upcoming     — non-cancelled appointments within the next 7 days
+     * Pending      — all appointments with visit_status = 'pending'
+     */
+    protected function buildStats(): array
+    {
+        $now = Carbon::now();
+
+        $dayStart = $now->copy()->startOfDay();
+        $dayEnd   = $now->copy()->endOfDay();
+        $weekEnd  = $now->copy()->addDays(7)->endOfDay();
+
+        $today = Appointment::whereBetween('next_appointment', [$dayStart, $dayEnd])
+            ->where('visit_status', '!=', 'cancelled')
+            ->count();
+
+        $remainingToday = Appointment::whereBetween('next_appointment', [$dayStart, $dayEnd])
+            ->whereIn('visit_status', ['pending', 'confirmed'])
+            ->where('next_appointment', '>', $now)
+            ->count();
+
+        $upcoming = Appointment::whereBetween('next_appointment', [$now, $weekEnd])
+            ->where('visit_status', '!=', 'cancelled')
+            ->count();
+
+        $pending = Appointment::where('visit_status', 'pending')->count();
+
+        return [
+            'today'            => $today,
+            'remaining_today'  => $remainingToday,
+            'upcoming'         => $upcoming,
+            'pending'          => $pending,
+        ];
+    }
+
+    /**
+     * Slim payload for the New Appointment patient dropdown.
+     */
+    protected function patientOptions()
+    {
+        return Patient::select('id', 'patient_name')
+            ->orderBy('patient_name')
+            ->get();
+    }
+
+    /**
+     * Slim payload for the New Appointment service dropdown.
+     */
+    protected function serviceOptions()
+    {
+        return Service::select('id', 'name', 'price')
+            ->orderBy('name')
+            ->get();
     }
 
     /**
@@ -112,7 +237,7 @@ class AppointmentController extends Controller
             'date_of_visit' => 'required|date',
             'next_appointment' => 'nullable|date',
             'no_next_appointment' => 'nullable|boolean',
-            'visit_status' => 'required|string|max:50',
+            'visit_status' => 'required|in:pending,confirmed,rescheduled,missed,completed,cancelled',
             'debit' => 'nullable|numeric|min:0',
             'credit' => 'nullable|numeric|min:0',
             'balance' => 'nullable|numeric',
@@ -246,6 +371,7 @@ class AppointmentController extends Controller
 
         $appointment->date_of_visit = $validated['date_of_visit'];
         $appointment->next_appointment = $validated['next_appointment'] ?? $validated['date_of_visit'];
+        $appointment->visit_status = 'rescheduled'; // mark it explicitly
         $appointment->save();
 
         return response()->json(['message' => 'Appointment rescheduled successfully']);
@@ -268,7 +394,7 @@ class AppointmentController extends Controller
             'date_of_visit' => 'required|date',
             'next_appointment' => 'nullable|date',
             'no_next_appointment' => 'nullable|boolean',
-            'visit_status' => 'required|string|max:50',
+            'visit_status' => 'required|in:pending,confirmed,rescheduled,missed,completed,cancelled',
             'debit' => 'nullable|numeric|min:0',
             'credit' => 'nullable|numeric|min:0',
             'balance' => 'nullable|numeric',

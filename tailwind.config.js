@@ -69,6 +69,16 @@ export default {
                     DEFAULT: "hsl(var(--card))",
                     foreground: "hsl(var(--card-foreground))",
                 },
+                clinic: {
+                    navy: "#082b46",
+                    "navy-soft": "#163750",
+                    "navy-line": "#2b4960",
+                    accent: "#e98b2a",
+                    blue: "#2858a7",
+                    canvas: "#f5f7fb",
+                    ink: "#0f1f33",
+                    line: "#e8edf3",
+                },
             },
             borderRadius: {
                 lg: "var(--radius)",

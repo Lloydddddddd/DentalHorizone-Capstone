@@ -41,7 +41,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Patients
     Route::resource('patients', PatientController::class);
     Route::post('patients/{patient}/archive', [PatientController::class, 'archive'])->name('patients.archive');
-    Route::get('archived-patients', [PatientController::class, 'archivedIndex'])->name('archived-patients.index');
     Route::post('archived-patients/{archived}/restore', [PatientController::class, 'restore'])->name('archived-patients.restore');
 
     // Other Resources

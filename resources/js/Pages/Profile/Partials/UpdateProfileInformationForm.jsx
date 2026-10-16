@@ -1,15 +1,23 @@
-import InputError from '@/Components/InputError';
-import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
-import TextInput from '@/Components/TextInput';
 import { Transition } from '@headlessui/react';
 import { Link, useForm, usePage } from '@inertiajs/react';
+import { useState } from 'react';
+import TextInput from '@/Components/TextInput';
+import InputError from '@/Components/InputError';
+import initials from '@/lib/initials';
 
-export default function UpdateProfileInformation({
-    mustVerifyEmail,
-    status,
-    className = '',
-}) {
+function Field({ label, error, children }) {
+    return (
+        <div>
+            <label className="mb-2 block text-[13px] font-semibold text-clinic-ink">
+                {label}
+            </label>
+            {children}
+            <InputError message={error} className="mt-1.5 text-[12px]" />
+        </div>
+    );
+}
+
+export default function UpdateProfileInformation({ mustVerifyEmail, status }) {
     const user = usePage().props.auth.user;
 
     const { data, setData, patch, errors, processing, recentlySuccessful } =
@@ -21,109 +29,87 @@ export default function UpdateProfileInformation({
 
     const submit = (e) => {
         e.preventDefault();
-
         patch(route('profile.update'));
     };
 
     return (
-        <section className={className}>
-            <header>
-                <h2 className="text-lg font-medium text-gray-900">
-                    Profile Information
-                </h2>
+        <form onSubmit={submit}>
+            {/* Fields */}
+            <div>
+                <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+                    <Field label="Display name" error={errors.name}>
+                        <TextInput
+                            variant="clinic"
+                            value={data.name}
+                            onChange={(e) => setData('name', e.target.value)}
+                            required
+                            autoComplete="name"
+                        />
+                    </Field>
 
-                <p className="mt-1 text-sm text-gray-600">
-                    Update your account's profile information and email address.
-                </p>
-            </header>
-
-            <form onSubmit={submit} className="mt-6 space-y-6">
-                <div>
-                    <InputLabel htmlFor="name" value="Name" />
-
-                    <TextInput
-                        id="name"
-                        className="mt-1 block w-full"
-                        value={data.name}
-                        onChange={(e) => setData('name', e.target.value)}
-                        required
-                        isFocused
-                        autoComplete="name"
-                    />
-
-                    <InputError className="mt-2" message={errors.name} />
+                    <Field label="Username" error={errors.username}>
+                        <TextInput
+                            variant="clinic"
+                            value={data.username}
+                            onChange={(e) => setData('username', e.target.value)}
+                            required
+                            autoComplete="username"
+                            disabled
+                            className="bg-slate-100 cursor-not-allowed"
+                        />
+                    </Field>
                 </div>
 
-                <div>
-                    <InputLabel htmlFor="username" value="Username" />
-
+                <Field label="Email address" error={errors.email}>
                     <TextInput
-                        id="username"
-                        className="mt-1 block w-full"
-                        value={data.username}
-                        onChange={(e) => setData('username', e.target.value)}
-                        required
-                        autoComplete="username"
-                    />
-
-                    <InputError className="mt-2" message={errors.username} />
-                </div>
-
-                <div>
-                    <InputLabel htmlFor="email" value="Email" />
-
-                    <TextInput
-                        id="email"
+                        variant="clinic"
                         type="email"
-                        className="mt-1 block w-full"
                         value={data.email}
                         onChange={(e) => setData('email', e.target.value)}
                         required
-                        autoComplete="username"
+                        autoComplete="email"
                     />
-
-                    <InputError className="mt-2" message={errors.email} />
-                </div>
+                </Field>
 
                 {mustVerifyEmail && user.email_verified_at === null && (
-                    <div>
-                        <p className="mt-2 text-sm text-gray-800">
-                            Your email address is unverified.
-                            <Link
-                                href={route('verification.send')}
-                                method="post"
-                                as="button"
-                                className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                            >
-                                Click here to re-send the verification email.
-                            </Link>
-                        </p>
-
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 px-5 py-3.5 text-[13px] text-amber-800">
+                        Your email address is unverified.
+                        <Link
+                            href={route('verification.send')}
+                            method="post"
+                            as="button"
+                            className="ml-1 font-semibold underline"
+                        >
+                            Re-send the verification email.
+                        </Link>
                         {status === 'verification-link-sent' && (
-                            <div className="mt-2 text-sm font-medium text-green-600">
-                                A new verification link has been sent to your
-                                email address.
-                            </div>
+                            <p className="mt-2 font-semibold text-emerald-700">
+                                A new verification link has been sent.
+                            </p>
                         )}
                     </div>
                 )}
+            </div>
 
-                <div className="flex items-center gap-4">
-                    <PrimaryButton disabled={processing}>Save</PrimaryButton>
-
-                    <Transition
-                        show={recentlySuccessful}
-                        enter="transition ease-in-out"
-                        enterFrom="opacity-0"
-                        leave="transition ease-in-out"
-                        leaveTo="opacity-0"
-                    >
-                        <p className="text-sm text-gray-600">
-                            Saved.
-                        </p>
-                    </Transition>
-                </div>
-            </form>
-        </section>
+            {/* Actions */}
+            <div className="mt-7 flex items-center gap-4 border-t border-clinic-line pt-6">
+                <button
+                    type="submit"
+                    disabled={processing}
+                    className="rounded-xl bg-clinic-navy px-6 py-3 text-[14px] font-semibold text-white shadow-sm transition hover:bg-[#0f3a5c] disabled:opacity-60"
+                >
+                    Save changes
+                </button>
+                <Transition
+                    show={recentlySuccessful}
+                    enter="transition ease-in-out"
+                    enterFrom="opacity-0"
+                    leave="transition ease-in-out"
+                    leaveTo="opacity-0"
+                >
+                    <p className="text-[13px] text-emerald-700">Saved.</p>
+                </Transition>
+            </div>
+        </form>
     );
 }

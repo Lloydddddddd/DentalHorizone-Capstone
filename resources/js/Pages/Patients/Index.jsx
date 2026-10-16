@@ -1,37 +1,48 @@
 import React, { useEffect, useState } from "react";
-import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
-import { Head, Link, usePage, router } from "@inertiajs/react";
+import { Head, router, usePage } from "@inertiajs/react";
+import { Plus, Search, ChevronRight, UserPlus, X } from "lucide-react";
+import ClinicLayout from "@/Layouts/ClinicLayout";
 import Modal from "@/Components/Modal";
 import InlineForm from "@/Pages/Patients/InlineForm";
-import AddAppointmentPopup from "@/Components/AddAppointmentPopup";
-import SearchFilter from "@/Components/SearchFilter";
+import StatusPill from "@/Components/StatusPill";
+import initials from "@/lib/initials";
+
+function formatDate(value) {
+    if (!value) return "—";
+    const d = new Date(value);
+    return isNaN(d)
+        ? "—"
+        : d.toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+          });
+}
 
 export default function Index({ patients, totalPatients }) {
     const { props } = usePage();
-    const patientsData = patients && patients.data ? patients.data : [];
+    const patientsData = patients?.data ?? [];
     const csrfToken =
         props?.csrfToken ||
         document
             .querySelector('meta[name="csrf-token"]')
             ?.getAttribute("content");
 
-    const [showArchiveModal, setShowArchiveModal] = useState(false);
-    const [selectedPatient, setSelectedPatient] = useState(null);
-
+    // Modals
     const [showAddModal, setShowAddModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [editingPatient, setEditingPatient] = useState(null);
 
-    const [showApptModal, setShowApptModal] = useState(false);
-    const [apptPatient, setApptPatient] = useState(null);
+    const [showRecordModal, setShowRecordModal] = useState(false);
+    const [recordPatient, setRecordPatient] = useState(null);
 
-    // Search + Sort
+    // Search + sort
     const [search, setSearch] = useState(props?.q || "");
     const [sort, setSort] = useState(props?.sort || "name");
 
-    // Debounced live search (keeps UX smooth)
+    // Debounced search
     useEffect(() => {
-        const handler = setTimeout(() => {
+        const t = setTimeout(() => {
             router.get(
                 route("patients.index"),
                 { q: search || undefined, sort: sort || undefined },
@@ -39,306 +50,353 @@ export default function Index({ patients, totalPatients }) {
                     preserveState: true,
                     replace: true,
                     only: ["patients", "flash"],
-                },
+                }
             );
         }, 500);
+        return () => clearTimeout(t);
+    }, [search, sort]);
 
-        return () => clearTimeout(handler);
-    }, [search, sort]); // Added sort dependency for completeness
-
-    const handleSortChange = (event) => {
-        const value = event.target.value;
-        setSort(value);
-        // Immediate sort update (no debounce needed)
-        router.get(
-            route("patients.index"),
-            { q: search || undefined, sort: value || undefined },
-            {
-                preserveState: true,
-                replace: true,
-                only: ["patients", "flash"],
-            },
-        );
-    };
-
-    const openEditModal = (patient) => {
-        setEditingPatient(patient);
-        setShowEditModal(true);
-    };
-
-    const closeEditModal = () => {
-        setShowEditModal(false);
-        setTimeout(() => setEditingPatient(null), 300);
+    const openRecord = (patient) => {
+        setRecordPatient(patient);
+        setShowRecordModal(true);
     };
 
     return (
-        <AuthenticatedLayout
-            header={
-                <div className="flex items-center gap-3">
-                    <h2 className="text-xl font-semibold">Patients</h2>
-                    <span className="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-semibold text-indigo-700">
-                        {totalPatients ?? 0} total
-                    </span>
-                </div>
-            }
-        >
+        <ClinicLayout>
             <Head title="Patients" />
 
-            <div className="p-6">
+            <div className="mx-auto w-full max-w-[1600px] px-5 py-10 lg:px-16">
+                {/* ── Page header ───────────────────────────────────── */}
+                <div className="flex flex-wrap items-end justify-between gap-4 pb-8">
+                    <div>
+                        <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-clinic-accent">
+                            Patient Records
+                        </p>
+                        <h1 className="mt-3 text-[2.75rem] font-semibold leading-tight tracking-[-0.02em] text-clinic-ink">
+                            Patients
+                        </h1>
+                        <p className="mt-3 text-[16px] text-slate-500">
+                            Manage patient information and care history.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={() => setShowAddModal(true)}
+                        className="flex items-center gap-2.5 rounded-xl bg-clinic-navy px-6 py-3.5 text-[15px] font-semibold text-white shadow-sm transition hover:bg-[#0f3a5c]"
+                    >
+                        <Plus className="h-5 w-5" />
+                        Add patient
+                    </button>
+                </div>
+
+                {/* ── Flash ─────────────────────────────────────────── */}
                 {props?.flash?.success && (
-                    <div className="mb-4 rounded-md bg-green-50 p-3 text-sm text-green-800">
+                    <div className="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3.5 text-[14px] text-emerald-800">
                         {props.flash.success}
                     </div>
                 )}
 
-                {/* Navigation Tabs */}
-                <div className="flex border-b border-gray-200 mb-6">
-                    <Link
-                        href={route("patients.index")}
-                        className="px-6 py-3 text-sm font-medium border-b-2 border-indigo-600 text-indigo-600 -mb-px"
-                    >
-                        Active Patients
-                    </Link>
-                    <Link
-                        href={route("archived-patients.index")}
-                        className="px-6 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300 -mb-px"
-                    >
-                        Archived Patients
-                    </Link>
-                </div>
-
-                {/* Refactored Search + Filters + Add */}
-                <div className="flex items-center justify-between gap-4 mb-6">
-                    <div className="flex-1 flex items-center gap-3">
-                        <form
-                            onSubmit={(e) => e.preventDefault()}
-                            className="flex items-center gap-3 flex-1"
-                        >
-                            <SearchFilter
-                                searchValue={search}
-                                onSearchChange={(e) =>
-                                    setSearch(e.target.value)
-                                }
-                                placeholder="Search by patient name..."
+                {/* ── Card ──────────────────────────────────────────── */}
+                <div className="rounded-2xl border border-clinic-line bg-white shadow-[0_1px_2px_rgba(15,31,51,0.04)]">
+                    {/* Toolbar */}
+                    <div className="flex flex-wrap items-center justify-between gap-4 border-b border-clinic-line px-7 py-6">
+                        <div className="relative w-full max-w-md">
+                            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Search patients..."
+                                className="w-full rounded-xl border border-clinic-line bg-white py-3 pl-11 pr-4 text-[15px] text-clinic-ink placeholder:text-slate-400 focus:border-clinic-blue focus:outline-none focus:ring-2 focus:ring-clinic-blue/15"
                             />
-                            <select
-                                value={sort}
-                                onChange={handleSortChange}
-                                className="rounded-md border border-gray-300 bg-white px-3 py-2 
-               text-sm text-gray-700 min-w-[160px] 
-               focus:outline-none focus:ring-2 focus:ring-blue-200"
-                            >
-                                <option value="name">Name (A–Z)</option>
-                                <option value="name_desc">Name (Z–A)</option>
-                                <option value="date">Date Added</option>
-                            </select>
-                            {/* Optional explicit search button - can be removed if live search suffices */}
-                            <button
-                                type="submit"
-                                className="rounded-md bg-indigo-600 px-5 py-2 text-sm text-white hover:bg-indigo-700 transition-colors whitespace-nowrap"
-                            >
-                                Search
-                            </button>
-                        </form>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-[14px] text-slate-500">
+                            <span className="font-bold text-clinic-ink">
+                                {totalPatients ?? 0}
+                            </span>
+                            <span>active patients</span>
+                        </div>
                     </div>
 
-                    {/* Add Patient Button */}
+                    {/* Table — all columns centered */}
+                    <div className="overflow-x-auto">
+                        <table className="w-full">
+                            <thead>
+                                <tr className="border-b border-clinic-line text-[12px] font-semibold uppercase tracking-[0.08em] text-slate-400">
+                                    <th className="px-7 py-4 text-center">Patient</th>
+                                    <th className="px-7 py-4 text-center">Age</th>
+                                    <th className="px-7 py-4 text-center">Contact</th>
+                                    <th className="px-7 py-4 text-center">Last Visit</th>
+                                    <th className="px-7 py-4 text-center">Status</th>
+                                    <th className="px-7 py-4 text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-[#edf0f4]">
+                                {patientsData.length === 0 && (
+                                    <tr>
+                                        <td colSpan={6} className="px-7 py-16 text-center">
+                                            <p className="text-[16px] font-medium text-slate-500">
+                                                No patients found
+                                            </p>
+                                            <p className="mt-1 text-[14px] text-slate-400">
+                                                Try adjusting your search or add a new patient.
+                                            </p>
+                                        </td>
+                                    </tr>
+                                )}
+
+                                {patientsData.map((p) => (
+                                    <tr
+                                        key={p.id}
+                                        className="transition-colors hover:bg-slate-50/70"
+                                    >
+                                        <td className="px-7 py-5 text-center">
+                                            <span className="text-[15px] font-semibold text-clinic-ink">
+                                                {p.patient_name}
+                                            </span>
+                                        </td>
+
+                                        <td className="px-7 py-5 text-center text-[15px] text-slate-600">
+                                            {p.age ?? "—"}
+                                        </td>
+
+                                        <td className="px-7 py-5 text-center text-[15px] text-slate-600">
+                                            {p.telephone || "—"}
+                                        </td>
+
+                                        <td className="px-7 py-5 text-center text-[15px] text-slate-600">
+                                            {formatDate(
+                                                p.last_visit ??
+                                                    p.updated_at ??
+                                                    p.created_at
+                                            )}
+                                        </td>
+
+                                        <td className="px-7 py-5 text-center">
+                                            <StatusPill status={p.status ?? "active"} />
+                                        </td>
+
+                                        <td className="px-7 py-5 text-center">
+                                            <div className="inline-flex items-center gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setEditingPatient(p);
+                                                        setShowEditModal(true);
+                                                    }}
+                                                    className="rounded-xl border border-clinic-line bg-white px-4 py-2 text-[13px] font-semibold text-clinic-ink transition hover:border-clinic-blue hover:bg-slate-50"
+                                                >
+                                                    Edit
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={() => openRecord(p)}
+                                                    className="group inline-flex items-center gap-1.5 rounded-xl border border-clinic-line bg-white px-4 py-2 text-[13px] font-semibold text-clinic-ink transition hover:border-clinic-blue hover:bg-slate-50"
+                                                >
+                                                    View record
+                                                    <ChevronRight className="h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-clinic-blue" />
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            {/* ── Add Patient Modal ─────────────────────────────────── */}
+            <Modal
+                show={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                maxWidth="2xl"
+            >
+                <div className="flex items-start justify-between border-b border-clinic-line px-8 py-6">
+                    <div className="flex items-start gap-4">
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#eaf0fb] text-clinic-blue">
+                            <UserPlus className="h-6 w-6" />
+                        </span>
+                        <div>
+                            <h2 className="text-[20px] font-semibold text-clinic-ink">
+                                Add a new patient
+                            </h2>
+                            <p className="mt-1 text-[14px] text-slate-500">
+                                Create a patient profile for your clinic.
+                            </p>
+                        </div>
+                    </div>
                     <button
-                        onClick={() => setShowAddModal(true)}
-                        className="inline-flex items-center rounded-md border border-transparent bg-green-700 px-4 py-2 text-xs font-semibold uppercase tracking-widest text-white transition duration-150 ease-in-out hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                        type="button"
+                        onClick={() => setShowAddModal(false)}
+                        className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                        aria-label="Close"
                     >
-                        + Add Patient
+                        <X className="h-5 w-5" />
                     </button>
                 </div>
 
-                <div className="bg-white shadow-sm rounded-md overflow-hidden">
-                    <table className="min-w-full table-auto border border-gray-300">
-                        <thead className="bg-orange-50">
-                            <tr>
-                                <th className="px-6 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">
-                                    Name
-                                </th>
-                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">
-                                    Age
-                                </th>
-                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">
-                                    Occupation
-                                </th>
-                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400 ">
-                                    Contact
-                                </th>
-                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">
-                                    Email
-                                </th>
-                                <th className="px-4 py-2 text-left text-xs font-bold text-blue-900 border-b-2 border-orange-400">
-                                    Status
-                                </th>
-                                <th className="px-5 py-2 text-center text-xs font-bold text-blue-900 border-b-2 border-orange-400">
-                                    Actions
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-300">
-                            {patientsData.length === 0 && (
-                                <tr>
-                                    <td
-                                        colSpan={7}
-                                        className="px-6 py-4 text-center text-sm text-gray-500"
-                                    >
-                                        No patients found.
-                                    </td>
-                                </tr>
-                            )}
-
-                            {patientsData.map((p) => (
-                                <tr
-                                    key={p.id}
-                                    className="hover:bg-gray-50 transition"
-                                >
-                                    <td className="px-4 py-3 text-sm font-medium">
-                                        {p.patient_name}
-                                    </td>
-                                    <td className="px-4 py-3 text-sm">
-                                        {p.age}
-                                    </td>
-                                    <td className="px-4 py-3 text-sm">
-                                        {p.occupation || "-"}
-                                    </td>
-                                    <td className="px-4 py-3 text-sm">
-                                        {p.telephone}
-                                    </td>
-                                    <td className="px-4 py-3 text-sm">
-                                        {p.email}
-                                    </td>
-                                    <td className="px-4 py-3 text-sm">
-                                        <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-800">
-                                            Active
-                                        </span>
-                                    </td>
-
-                                    <td className="px-4 py-3 text-sm text-right space-x-4">
-                                        <button
-                                            onClick={() => {
-                                                setApptPatient(p);
-                                                setShowApptModal(true);
-                                            }}
-                                            className="text-indigo-600 hover:text-indigo-800 hover:underline"
-                                        >
-                                            Appointment
-                                        </button>
-                                        <button
-                                            onClick={() => openEditModal(p)}
-                                            className="text-green-700 hover:text-green-800 hover:underline font-medium"
-                                        >
-                                            Edit
-                                        </button>
-                                        <button
-                                            onClick={() => {
-                                                setSelectedPatient(p);
-                                                setShowArchiveModal(true);
-                                            }}
-                                            className="text-red-600 hover:text-red-800 hover:underline"
-                                        >
-                                            Archive
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                <Modal
-                    show={showArchiveModal}
-                    onClose={() => setShowArchiveModal(false)}
-                >
-                    <div className="p-6">
-                        <h3 className="text-lg font-medium">Archive patient</h3>
-                        <p className="mt-2 text-sm text-gray-600">
-                            Are you sure you want to archive{" "}
-                            <strong>{selectedPatient?.patient_name}</strong>?
-                            This will move the patient to Archived Patients.
-                        </p>
-
-                        <div className="mt-4 flex justify-end space-x-3">
-                            <button
-                                onClick={() => setShowArchiveModal(false)}
-                                className="rounded-md border px-4 py-2"
-                            >
-                                Cancel
-                            </button>
-                            <form
-                                method="POST"
-                                action={
-                                    selectedPatient
-                                        ? route(
-                                              "patients.archive",
-                                              selectedPatient.id,
-                                          )
-                                        : "#"
-                                }
-                            >
-                                <input
-                                    type="hidden"
-                                    name="_token"
-                                    value={csrfToken}
-                                />
-                                <button className="rounded-md bg-red-600 px-4 py-2 text-white">
-                                    Archive
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </Modal>
-
-                <Modal
-                    show={showAddModal}
-                    onClose={() => setShowAddModal(false)}
-                >
-                    <div className="p-6">
-                        <h3 className="text-lg font-medium">Add Patient</h3>
-                        <div className="mt-4">
-                            <InlineForm
-                                onSuccess={() => {
-                                    setShowAddModal(false);
-                                    router.reload();
-                                }}
-                            />
-                        </div>
-                    </div>
-                </Modal>
-
-                <Modal show={showEditModal} onClose={closeEditModal}>
-                    <div className="p-6">
-                        <h3 className="text-lg font-medium">Edit Patient</h3>
-                        <div className="mt-4">
-                            <InlineForm
-                                patient={editingPatient}
-                                onSuccess={() => {
-                                    closeEditModal();
-                                    router.reload();
-                                }}
-                            />
-                        </div>
-                    </div>
-                </Modal>
-
-                {showApptModal && (
-                    <AddAppointmentPopup
-                        patient={apptPatient}
-                        onClose={() => setShowApptModal(false)}
-                        onSaved={() => router.reload()}
+                <div className="px-8 py-7">
+                    <InlineForm
+                        onSuccess={() => {
+                            setShowAddModal(false);
+                            router.reload();
+                        }}
+                        onCancel={() => setShowAddModal(false)}
                     />
-                )}
+                </div>
+            </Modal>
 
-                <div className="mt-4 text-sm text-gray-600">
-                    {patients?.meta
-                        ? `Page ${patients.meta.current_page} of ${patients.meta.last_page}`
-                        : ""}
+            {/* ── Edit Patient Modal ────────────────────────────────── */}
+            <Modal
+                show={showEditModal}
+                onClose={() => setShowEditModal(false)}
+                maxWidth="2xl"
+            >
+                <div className="flex items-start justify-between border-b border-clinic-line px-8 py-6">
+                    <div className="flex items-start gap-4">
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#eaf0fb] text-clinic-blue">
+                            <UserPlus className="h-6 w-6" />
+                        </span>
+                        <div>
+                            <h2 className="text-[20px] font-semibold text-clinic-ink">
+                                Edit patient
+                            </h2>
+                            <p className="mt-1 text-[14px] text-slate-500">
+                                Update this patient's information.
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setShowEditModal(false)}
+                        className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                        aria-label="Close"
+                    >
+                        <X className="h-5 w-5" />
+                    </button>
                 </div>
 
-                {/* Edit modal placeholder removed (kept HEAD behavior: controller-based edit exists elsewhere) */}
+                <div className="px-8 py-7">
+                    <InlineForm
+                        patient={editingPatient}
+                        onSuccess={() => {
+                            setShowEditModal(false);
+                            router.reload();
+                        }}
+                        onCancel={() => setShowEditModal(false)}
+                    />
+                </div>
+            </Modal>
+
+            {/* ── Patient Record Modal ──────────────────────────────── */}
+            <Modal
+                show={showRecordModal}
+                onClose={() => setShowRecordModal(false)}
+                maxWidth="2xl"
+            >
+                {recordPatient && (
+                    <>
+                        {/* Header: name + subtitle + close */}
+                        <div className="flex items-start justify-between gap-4 border-b border-clinic-line px-8 py-7">
+                            <div>
+                                <h2 className="text-[24px] font-semibold leading-tight text-clinic-ink">
+                                    {recordPatient.patient_name}
+                                </h2>
+                                <p className="mt-1 text-[14px] text-slate-500">
+                                    Patient record and visit summary
+                                </p>
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() => setShowRecordModal(false)}
+                                className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+                                aria-label="Close"
+                            >
+                                <X className="h-5 w-5" />
+                            </button>
+                        </div>
+
+                        {/* 2×2 info grid */}
+                        <div className="grid grid-cols-2">
+                            <RecordCell
+                                label="Age"
+                                value={
+                                    recordPatient.age
+                                        ? `${recordPatient.age} years old`
+                                        : "—"
+                                }
+                            />
+                            <RecordCell
+                                label="Contact number"
+                                value={recordPatient.telephone || "—"}
+                                rightBorder={false}
+                            />
+
+                            <RecordCell
+                                label="Last visit"
+                                value={formatDate(
+                                    recordPatient.last_visit ??
+                                        recordPatient.updated_at ??
+                                        recordPatient.created_at
+                                )}
+                                bottomBorder={false}
+                            />
+                            <RecordCell
+                                label="Patient status"
+                                value={
+                                    <StatusPill
+                                        status={recordPatient.status ?? "active"}
+                                    />
+                                }
+                                bottomBorder={false}
+                                rightBorder={false}
+                            />
+                        </div>
+
+                        {/* Footer */}
+                        <div className="flex justify-end border-t border-clinic-line bg-slate-50/60 px-8 py-5">
+                            <button
+                                type="button"
+                                onClick={() => setShowRecordModal(false)}
+                                className="rounded-xl border border-clinic-line bg-white px-6 py-3 text-[14px] font-semibold text-clinic-ink transition hover:bg-slate-50"
+                            >
+                                Close record
+                            </button>
+                        </div>
+                    </>
+                )}
+            </Modal>
+        </ClinicLayout>
+    );
+}
+
+/* Reusable cell for the 2×2 grid inside the record modal */
+    function RecordCell({
+        label,
+        value,
+        rightBorder = true,
+        bottomBorder = true,
+    }) 
+{
+    return (
+        <div
+            className={[
+                "px-8 py-7",
+                rightBorder ? "border-r border-clinic-line" : "",
+                bottomBorder ? "border-b border-clinic-line" : "",
+            ]
+                .filter(Boolean)
+                .join(" ")}
+        >
+            <p className="text-[13px] font-medium text-slate-400">{label}</p>
+            <div className="mt-2 text-[16px] font-semibold text-clinic-ink">
+                {value}
             </div>
-        </AuthenticatedLayout>
+        </div>
     );
 }

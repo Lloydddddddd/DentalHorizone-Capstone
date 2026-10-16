@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { STATUS_COLORS, FILTER_LABELS } from './calendarHelpers';
+import dayjs from 'dayjs';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -21,27 +22,42 @@ function formatMonthYear(year, month) {
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
 /**
+ * Statuses we consider "active" for the calendar view.
+ * `completed` and `cancelled` are intentionally excluded so the calendar
+ * reflects what's still scheduled, not what's already done.
+ */
+const ACTIVE_STATUSES = ['pending', 'confirmed', 'scheduled', 'rescheduled'];
+
+/**
  * Resolve an appointment's canonical status.
- * Priority: explicit visit_status field → date comparison fallback.
+ * Explicit status wins; otherwise fall back to a date comparison.
  */
 function getApptStatus(appt) {
-    if (!appt.next_appointment) return null;
+    const raw = appt.next_appointment_raw || appt.next_appointment;
+    if (!raw) return null;
+
+    const status = String(appt.visit_status || '').toLowerCase();
+
+    // Explicit outcomes win
+    if (['completed', 'cancelled', 'rescheduled'].includes(status)) {
+        return status;
+    }
 
     const now = new Date();
-    const apptDate = new Date(appt.next_appointment);
+    const at = new Date(raw);
 
-    if (apptDate.toDateString() === now.toDateString()) return "today";
-    if (apptDate > now) return "upcoming";
-    if (apptDate < now) return "missed";
-
-    return null;
+    if (at.toDateString() === now.toDateString()) return 'today';
+    if (at > now) return 'upcoming';
+    return 'missed';
 }
 
 function dayBadgeColor(dayAppts) {
     const statuses = dayAppts.map((a) => getApptStatus(a));
-    if (statuses.includes('missed'))   return 'missed';
-    if (statuses.includes('upcoming')) return 'upcoming';
-    if (statuses.includes('today'))    return 'today';
+    if (statuses.includes('missed'))      return 'missed';
+    if (statuses.includes('rescheduled')) return 'rescheduled';
+    if (statuses.includes('confirmed'))   return 'confirmed';
+    if (statuses.includes('upcoming'))    return 'upcoming';
+    if (statuses.includes('today'))       return 'today';
     return null;
 }
 
@@ -54,56 +70,58 @@ export default function CalendarModal({ appointments, onClose, initialFilter = n
     const [selectedDay, setSelectedDay] = useState(null);
     const [activeFilter, setActiveFilter] = useState(initialFilter); // null | 'missed' | 'today' | 'upcoming'
 
-    // Sync if parent changes filter (e.g. clicking a different stat card while modal is open)
+    // Sync if parent changes filter
     useEffect(() => {
         setActiveFilter(initialFilter);
         setSelectedDay(null);
     }, [initialFilter]);
 
-    // When a filter activates, jump to the first month that has matching appointments
+    // When a filter activates, jump to today if it's the "today" filter
     useEffect(() => {
         if (!activeFilter) return;
 
-        if (activeFilter === "today") {
-            // Special case: auto-focus on today
+        if (activeFilter === 'today') {
             setViewYear(today.getFullYear());
             setViewMonth(today.getMonth());
             setSelectedDay(today.getDate());
             return;
         }
 
-        // For missed/upcoming: don't auto-focus
         setSelectedDay(null);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeFilter]);
 
-    // Apply filter to the full appointment list
+    // ── Filter appointments ────────────────────────────────────────────
+    // Always exclude completed/cancelled so the calendar only shows live work.
+    const activeAppointments = appointments.filter((a) =>
+        ACTIVE_STATUSES.includes(String(a.visit_status || '').toLowerCase())
+    );
+
     const visibleAppointments = activeFilter
-    ? appointments.filter(a => {
-            if (a.visit_status !== "pending") return false;
-            const apptDate = new Date(a.next_appointment);
+        ? activeAppointments.filter((a) => {
+              const raw = a.next_appointment_raw || a.next_appointment;
+              if (!raw) return false;
+              const apptDate = new Date(raw);
 
-            if (activeFilter === "today") {
-                return apptDate.toDateString() === today.toDateString();
-            }
-            if (activeFilter === "missed") {
-                return apptDate < today ||
-                    (apptDate.toDateString() === today.toDateString() && apptDate < today);
-            }
-            if (activeFilter === "upcoming") {
-                return apptDate > today ||
-                    (apptDate.toDateString() === today.toDateString() && apptDate > today);
-            }
-            return false;
-        })
-    : appointments.filter(a => a.visit_status === "pending");
+              if (activeFilter === 'today') {
+                  return apptDate.toDateString() === today.toDateString();
+              }
+              if (activeFilter === 'missed') {
+                  return apptDate < today;
+              }
+              if (activeFilter === 'upcoming') {
+                  return apptDate > today;
+              }
+              return false;
+          })
+        : activeAppointments;
 
-    // Group by date
+    // ── Group by date ─────────────────────────────────────────────────
     const apptsByDate = {};
     visibleAppointments.forEach((appt) => {
         const raw = appt.next_appointment_raw || appt.next_appointment;
         const parsed = new Date(raw);
-
-        if (!isNaN(parsed)) {   // only group if valid date
+        if (!isNaN(parsed)) {
             const key = parsed.toISOString().slice(0, 10);
             if (!apptsByDate[key]) apptsByDate[key] = [];
             apptsByDate[key].push(appt);
@@ -134,31 +152,27 @@ export default function CalendarModal({ appointments, onClose, initialFilter = n
         : null;
 
     const selectedAppts =
-        activeFilter === "today"
+        activeFilter === 'today'
             ? apptsByDate[todayStr] ?? []
             : selectedDateStr
                 ? apptsByDate[selectedDateStr] ?? []
                 : [];
 
-    // Counts for filter pills
+    // ── Filter pill counts ────────────────────────────────────────────
     const counts = {
-        missed: appointments.filter(a => {
-            if (a.visit_status !== "pending") return false;
-            const apptDate = new Date(a.next_appointment);
-            return apptDate < today ||
-                (apptDate.toDateString() === today.toDateString() && apptDate < today);
+        missed: activeAppointments.filter((a) => {
+            const raw = a.next_appointment_raw || a.next_appointment;
+            return raw && new Date(raw) < today;
         }).length,
 
-        today: appointments.filter(a => {
-            if (a.visit_status !== "pending") return false;
-            return new Date(a.next_appointment).toDateString() === today.toDateString();
+        today: activeAppointments.filter((a) => {
+            const raw = a.next_appointment_raw || a.next_appointment;
+            return raw && new Date(raw).toDateString() === today.toDateString();
         }).length,
 
-        upcoming: appointments.filter(a => {
-            if (a.visit_status !== "pending") return false;
-            const apptDate = new Date(a.next_appointment);
-            return apptDate > today ||
-                (apptDate.toDateString() === today.toDateString() && apptDate > today);
+        upcoming: activeAppointments.filter((a) => {
+            const raw = a.next_appointment_raw || a.next_appointment;
+            return raw && new Date(raw) > today;
         }).length,
     };
 
@@ -170,7 +184,7 @@ export default function CalendarModal({ appointments, onClose, initialFilter = n
         >
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4 overflow-hidden">
 
-                {/* ── Modal Header ── */}
+                {/* Modal Header */}
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                     <h2 className="text-lg font-bold text-gray-800">Appointment Calendar</h2>
                     <button
@@ -182,7 +196,7 @@ export default function CalendarModal({ appointments, onClose, initialFilter = n
                     </button>
                 </div>
 
-                {/* ── Filter Pills ── */}
+                {/* Filter Pills */}
                 <div className="flex items-center gap-2 px-6 pt-4">
                     <button
                         onClick={() => { setActiveFilter(null); setSelectedDay(null); }}
@@ -191,26 +205,26 @@ export default function CalendarModal({ appointments, onClose, initialFilter = n
                                 ? 'bg-gray-800 text-white border-gray-800'
                                 : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'}`}
                     >
-                        All ({appointments.length})
+                        All ({activeAppointments.length})
                     </button>
 
                     {(['missed', 'today', 'upcoming']).map((f) => (
                         <button
                             key={f}
-                            onClick={() => { setActiveFilter(prev => prev === f ? null : f); setSelectedDay(null); }}
+                            onClick={() => { setActiveFilter(prev => (prev === f ? null : f)); setSelectedDay(null); }}
                             className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full border transition-colors
                                 ${activeFilter === f
-                                    ? `${STATUS_COLORS[f].bg} ${STATUS_COLORS[f].text} border-transparent`
+                                    ? `${STATUS_COLORS[f]?.bg ?? 'bg-gray-800'} ${STATUS_COLORS[f]?.text ?? 'text-white'} border-transparent`
                                     : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'}`}
                         >
-                            <span className={`w-2 h-2 rounded-full ${activeFilter === f ? 'bg-white' : STATUS_COLORS[f].dot}`} />
-                            {FILTER_LABELS[f].label} ({counts[f]})
+                            <span className={`w-2 h-2 rounded-full ${activeFilter === f ? 'bg-white' : (STATUS_COLORS[f]?.dot ?? 'bg-gray-400')}`} />
+                            {FILTER_LABELS[f]?.label ?? f} ({counts[f]})
                         </button>
                     ))}
                 </div>
 
                 <div className="p-6 flex flex-col gap-4">
-                    {/* ── Month Navigation ── */}
+                    {/* Month Navigation */}
                     <div className="flex items-center justify-between">
                         <button onClick={prevMonth} className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-600 text-lg">
                             ‹
@@ -223,12 +237,12 @@ export default function CalendarModal({ appointments, onClose, initialFilter = n
                         </button>
                     </div>
 
-                    {/* ── Weekday Headers ── */}
+                    {/* Weekday Headers */}
                     <div className="grid grid-cols-7 text-center text-xs font-semibold text-gray-400 uppercase tracking-wide">
                         {WEEKDAYS.map((d) => <div key={d}>{d}</div>)}
                     </div>
 
-                    {/* ── Day Cells ── */}
+                    {/* Day Cells */}
                     <div className="grid grid-cols-7 gap-1">
                         {cells.map((day, idx) => {
                             if (!day) return <div key={`empty-${idx}`} />;
@@ -252,14 +266,14 @@ export default function CalendarModal({ appointments, onClose, initialFilter = n
                                 >
                                     {day}
                                     {badge && (
-                                        <span className={`mt-0.5 w-2 h-2 rounded-full ${STATUS_COLORS[badge].dot}`} />
+                                        <span className={`mt-0.5 w-2 h-2 rounded-full ${STATUS_COLORS[badge]?.dot ?? 'bg-gray-400'}`} />
                                     )}
                                 </button>
                             );
                         })}
                     </div>
 
-                    {/* ── Selected Day Detail ── */}
+                    {/* Selected Day Detail */}
                     {selectedDay && (
                         <div className="border border-gray-100 rounded-xl p-4">
                             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
@@ -272,8 +286,13 @@ export default function CalendarModal({ appointments, onClose, initialFilter = n
                             ) : (
                                 <ul className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-1">
                                     {selectedAppts.map((appt, i) => {
-                                        const status = getApptStatus(appt, todayStr);
-                                        const colors = STATUS_COLORS[status];
+                                        const status = getApptStatus(appt);
+                                        const colors = STATUS_COLORS[status] ?? STATUS_COLORS.pending;
+                                        const rawDate = appt.next_appointment_raw || appt.next_appointment;
+                                        const timeLabel = rawDate
+                                            ? dayjs(rawDate).format('h:mm A')
+                                            : '—';
+
                                         return (
                                             <li
                                                 key={appt.id ?? i}
@@ -281,18 +300,14 @@ export default function CalendarModal({ appointments, onClose, initialFilter = n
                                             >
                                                 <div className="flex flex-col gap-0.5">
                                                     <span className="font-semibold">{appt.patient_name}</span>
-                                                    <span className="text-xs opacity-70" title={appt.fullService}>
-                                                        {appt.service || "No service"}
+                                                    <span className="text-xs opacity-70" title={appt.service}>
+                                                        {appt.service || 'No service'}
                                                     </span>
-                                                    <div className="mt-1 text-xs text-gray-500">
-                                                        {appt.occupation ? <span>{appt.occupation}</span> : null}
-                                                        {appt.email ? <span className="ml-2">{appt.email}</span> : null}
-                                                    </div>
                                                 </div>
                                                 <div className="flex flex-col items-end gap-1 ml-4 shrink-0">
-                                                    <span className="font-medium text-xs">{appt.time}</span>
+                                                    <span className="font-medium text-xs">{timeLabel}</span>
                                                     <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${colors.bg} ${colors.text}`}>
-                                                        {status.charAt(0).toUpperCase() + status.slice(1)}
+                                                        {String(status || '').replace(/^\w/, (c) => c.toUpperCase())}
                                                     </span>
                                                 </div>
                                             </li>
@@ -303,7 +318,7 @@ export default function CalendarModal({ appointments, onClose, initialFilter = n
                         </div>
                     )}
 
-                    {/* ── Empty state when filter yields nothing ── */}
+                    {/* Empty state */}
                     {activeFilter && visibleAppointments.length === 0 && (
                         <div className="text-center py-6 text-sm text-gray-400">
                             No {activeFilter} appointments found.
