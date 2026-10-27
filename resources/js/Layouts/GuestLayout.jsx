@@ -5,7 +5,7 @@ import React from "react";
 
 export default function GuestLayout({ children }) {
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="flex min-h-screen flex-col bg-clinic-navy">
       {children}
     </div>
   );

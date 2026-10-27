@@ -12,10 +12,6 @@ function readCollapsed() {
     }
 }
 
-/**
- * New app shell (navy sidebar + top bar). Used by the redesigned Overview page;
- * other pages can adopt it later by swapping AuthenticatedLayout for this one.
- */
 export default function ClinicLayout({ children }) {
     const [collapsed, setCollapsed] = useState(readCollapsed);
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -26,7 +22,7 @@ export default function ClinicLayout({ children }) {
             try {
                 window.localStorage.setItem(STORAGE_KEY, next ? '1' : '0');
             } catch {
-                /* storage unavailable: the toggle still works for this visit */
+            
             }
             return next;
         });

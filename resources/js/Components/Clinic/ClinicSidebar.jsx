@@ -56,24 +56,29 @@ export default function ClinicSidebar({ collapsed, onToggleCollapsed, mobileOpen
                 } ${mobileOpen ? 'translate-x-0' : '-translate-x-full'}`}
             >
                 {/* Brand */}
-                <div className="flex items-center justify-between border-b border-white/10 px-6 py-6">
-                    <Link href="/dashboard" className="flex items-center gap-3">
-                        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-b from-white to-slate-200 text-[17px] font-bold text-clinic-navy shadow-sm">
-                            DH
+                <div className="relative flex items-center justify-center border-b border-white/10 px-6 py-6">
+                    
+                    {/* Centered Text Logo */}
+                    <Link href="/dashboard" className="flex flex-col items-center justify-center text-center">
+                        <span className={`text-[12px] font-semibold uppercase tracking-[0.25em] text-white/55 ${hideWhenCollapsed}`}>
+                            Dental
                         </span>
-                        <span className={`leading-none ${hideWhenCollapsed}`}>
-                            <span className="block text-[12px] font-semibold uppercase tracking-[0.25em] text-white/55">Dental</span>
-                            <span className="mt-1 block text-[22px] font-bold tracking-tight">
-                                Horiz<span className="text-clinic-accent">o</span>ne
+                        <span className={`mt-1 block text-[22px] font-bold tracking-tight ${hideWhenCollapsed}`}>
+                            Horiz<span className="text-clinic-accent">o</span>ne
+                        </span>
+                        
+                        {collapsed && (
+                            <span className="hidden lg:flex h-8 w-8 items-center justify-center rounded-lg bg-white text-clinic-navy text-sm font-bold">
+                                DH
                             </span>
-                            <span className="mt-1.5 block h-0.5 w-16 rounded-full bg-gradient-to-r from-clinic-accent to-transparent" />
-                        </span>
+                        )}
                     </Link>
 
+                    {/* Toggle Buttons */}
                     <button
                         type="button"
                         onClick={onToggleCollapsed}
-                        className={`hidden rounded-lg p-1.5 text-white/60 hover:bg-white/10 hover:text-white ${collapsed ? '' : 'lg:block'}`}
+                        className={`absolute right-4 hidden rounded-lg p-1.5 text-white/60 hover:bg-white/10 hover:text-white ${collapsed ? '' : 'lg:block'}`}
                         aria-label="Collapse sidebar"
                     >
                         <ChevronLeft size={18} />
@@ -81,7 +86,7 @@ export default function ClinicSidebar({ collapsed, onToggleCollapsed, mobileOpen
                     <button
                         type="button"
                         onClick={onCloseMobile}
-                        className="rounded-lg p-1.5 text-white/60 hover:bg-white/10 hover:text-white lg:hidden"
+                        className="absolute right-4 rounded-lg p-1.5 text-white/60 hover:bg-white/10 hover:text-white lg:hidden"
                         aria-label="Close menu"
                     >
                         <X size={18} />
