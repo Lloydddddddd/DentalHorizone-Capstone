@@ -51,9 +51,6 @@ export default function ClinicTopbar({ onOpenMenu }) {
             <Dropdown>
                 <Dropdown.Trigger>
                     <button type="button" className="flex items-center gap-3 rounded-xl p-1 hover:bg-slate-50">
-                        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-clinic-blue text-sm font-bold text-white">
-                            {initials(user.name)}
-                        </span>
                         <span className="hidden text-left leading-tight sm:block">
                             <span className="block text-[15px] font-semibold text-clinic-ink">{user.name}</span>
                             <span className="block text-[13px] text-slate-500">
