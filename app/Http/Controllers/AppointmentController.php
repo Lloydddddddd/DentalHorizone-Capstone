@@ -338,7 +338,7 @@ class AppointmentController extends Controller
             ]);
         }
 
-        // GENERATE BILL FOR PUBLIC BOOKING
+        // BILLING FOR PUBLIC BOOKING
         $subtotal = $appointment->services->sum('price');
         if ($subtotal > 0) {
             $billId = DB::table('bills')->insertGetId([

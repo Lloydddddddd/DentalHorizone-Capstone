@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-// 1. The Main Bill Model
+// The Main Bill Model
 class Bill extends Model
 {
     protected $fillable = [
@@ -18,7 +18,7 @@ class Bill extends Model
     public function payments() { return $this->hasMany(Payment::class); }
 }
 
-// 2. The Item Model
+// The Item Model
 class BillItem extends Model
 {
     protected $fillable = [
@@ -29,7 +29,7 @@ class BillItem extends Model
     public function service() { return $this->belongsTo(Service::class); }
 }
 
-// 3. The Payment Model
+// The Payment Model
 class Payment extends Model
 {
     protected $fillable = [
