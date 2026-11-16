@@ -6,6 +6,7 @@ use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\Service;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB; 
 use Carbon\Carbon;
 
 class AppointmentController extends Controller
@@ -15,7 +16,6 @@ class AppointmentController extends Controller
         $query = Appointment::with(['patient', 'services']);
         $now = Carbon::now();
 
-        // Tab filter from the All / Upcoming / Missed pills
         $tab = $request->input('tab');
         if ($tab === 'upcoming') {
             $query->whereNotNull('next_appointment')
@@ -59,7 +59,7 @@ class AppointmentController extends Controller
         $query = Appointment::with(['patient', 'services'])
             ->whereNotNull('next_appointment')
             ->where(function ($q) use ($now) {
-                $q->where('next_appointment', '>', $now); // future
+                $q->where('next_appointment', '>', $now);
             })
             ->where('visit_status', '!=', 'cancelled');
 
@@ -95,7 +95,7 @@ class AppointmentController extends Controller
         $query = Appointment::with(['patient', 'services'])
             ->whereNotNull('next_appointment')
             ->where(function ($q) use ($now) {
-                $q->where('next_appointment', '<', $now); // past
+                $q->where('next_appointment', '<', $now);
             })
             ->where('visit_status', '!=', 'cancelled');
 
@@ -124,26 +124,18 @@ class AppointmentController extends Controller
         ]);
     }
 
-    /**
-     * Shape a single Appointment row for the front-end table + modals.
-     * Columns follow the appointments migration; related data is flattened.
-     */
     protected function mapAppointment(Appointment $appt): array
     {
-        // Raw values (before Carbon casts) so the front end can format timezones itself.
         $rawNextAppointment = $appt->getRawOriginal('next_appointment');
         $rawDateOfVisit     = $appt->getRawOriginal('date_of_visit');
 
-        // Services come from the pivot; fall back to em-dash when nothing is attached.
         $serviceNames = $appt->services->isNotEmpty()
             ? $appt->services->pluck('name')->join(', ')
             : '—';
 
-        // Balance may be null in the DB; default to 0.00 so it doesn't render as "—".
         $balance = is_null($appt->balance) ? 0.0 : (float) $appt->balance;
 
         return [
-            // ── Direct columns from the appointments table ────────────
             'id'                   => $appt->id,
             'patient_id'           => $appt->patient_id,
             'complaint'            => $appt->complaint,
@@ -156,25 +148,13 @@ class AppointmentController extends Controller
             'debit'                => (float) $appt->debit,
             'credit'               => (float) $appt->credit,
             'balance'              => $balance,
-
-            // ── Related data flattened for the table ──────────────────
             'patient_name'         => $appt->patient?->patient_name ?? '—',
             'service'              => $serviceNames,
-
-            // ── Aliases the details modal reads ───────────────────────
             'fullComplaint'        => $appt->complaint,
             'fullNote'             => $appt->note,
         ];
     }
 
-    /**
-     * Compute the counts shown in the stats bar across all views.
-     *
-     * Today        — every non-cancelled appointment whose next_appointment is today
-     * Remaining    — today's pending/confirmed appointments still in the future
-     * Upcoming     — non-cancelled appointments within the next 7 days
-     * Pending      — all appointments with visit_status = 'pending'
-     */
     protected function buildStats(): array
     {
         $now = Carbon::now();
@@ -206,29 +186,16 @@ class AppointmentController extends Controller
         ];
     }
 
-    /**
-     * Slim payload for the New Appointment patient dropdown.
-     */
     protected function patientOptions()
     {
-        return Patient::select('id', 'patient_name')
-            ->orderBy('patient_name')
-            ->get();
+        return Patient::select('id', 'patient_name')->orderBy('patient_name')->get();
     }
 
-    /**
-     * Slim payload for the New Appointment service dropdown.
-     */
     protected function serviceOptions()
     {
-        return Service::select('id', 'name', 'price')
-            ->orderBy('name')
-            ->get();
+        return Service::select('id', 'name', 'price')->orderBy('name')->get();
     }
 
-    /**
-     * Store a newly created resource in storage (Admin/Secretary use).
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -255,7 +222,6 @@ class AppointmentController extends Controller
 
         $validated['balance'] = ($validated['debit'] ?? 0) - ($validated['credit'] ?? 0);
 
-        // Prevent overlapping schedule for admin-created appointments
         $conflict = Appointment::whereIn('visit_status', ['pending', 'confirmed'])
             ->where('next_appointment', $validated['next_appointment'])
             ->exists();
@@ -284,12 +250,39 @@ class AppointmentController extends Controller
             ]);
         }
 
+        // BILLING
+        $subtotal = $appointment->services->sum('price');
+        if ($subtotal > 0) {
+            $billId = DB::table('bills')->insertGetId([
+                'patient_id' => $appointment->patient_id,
+                'appointment_id' => $appointment->id,
+                'subtotal' => $subtotal,
+                'discount' => 0,
+                'total_amount' => $subtotal,
+                'amount_paid' => $validated['credit'] ?? 0,
+                'balance' => $subtotal - ($validated['credit'] ?? 0),
+                'payment_status' => ($validated['credit'] ?? 0) >= $subtotal ? 'paid' : (($validated['credit'] ?? 0) > 0 ? 'partial' : 'unpaid'),
+                'billing_date' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            foreach ($appointment->services as $service) {
+                DB::table('bill_items')->insert([
+                    'bill_id' => $billId,
+                    'service_id' => $service->id,
+                    'quantity' => 1,
+                    'unit_price' => $service->price,
+                    'subtotal' => $service->price,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+
         return redirect()->route('appointments.index');
     }
 
-    /**
-     * Store appointment from public "Book Appointment" form.
-     */
     public function publicStore(Request $request)
     {
         $validated = $request->validate([
@@ -307,7 +300,7 @@ class AppointmentController extends Controller
         ]);
 
         $conflict = Appointment::where('next_appointment', $validated['next_appointment'])
-            ->whereIn('visit_status', ['pending', 'confirmed']) // only block active appointments
+            ->whereIn('visit_status', ['pending', 'confirmed'])
             ->exists();
 
         if ($conflict) {
@@ -331,8 +324,8 @@ class AppointmentController extends Controller
             'patient_id'     => $patient->id,
             'complaint'      => $validated['complaint'] ?? null,
             'date_of_visit'  => null,
-            'next_appointment'=> $validated['next_appointment'], // align with upcoming/missed logic
-            'visit_status'   => 'pending', // standardized lowercase
+            'next_appointment'=> $validated['next_appointment'],
+            'visit_status'   => 'pending',
             'debit'          => 0,
             'credit'         => 0,
             'balance'        => 0,
@@ -341,8 +334,38 @@ class AppointmentController extends Controller
 
         foreach ($validated['services'] as $srvId) {
             $appointment->services()->attach($srvId, [
-                'note'  => null // optional pivot note
+                'note'  => null 
             ]);
+        }
+
+        // GENERATE BILL FOR PUBLIC BOOKING
+        $subtotal = $appointment->services->sum('price');
+        if ($subtotal > 0) {
+            $billId = DB::table('bills')->insertGetId([
+                'patient_id' => $appointment->patient_id,
+                'appointment_id' => $appointment->id,
+                'subtotal' => $subtotal,
+                'discount' => 0,
+                'total_amount' => $subtotal,
+                'amount_paid' => 0,
+                'balance' => $subtotal,
+                'payment_status' => 'unpaid',
+                'billing_date' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            foreach ($appointment->services as $service) {
+                DB::table('bill_items')->insert([
+                    'bill_id' => $billId,
+                    'service_id' => $service->id,
+                    'quantity' => 1,
+                    'unit_price' => $service->price,
+                    'subtotal' => $service->price,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
 
         return redirect()->back()->with('success', 'Your appointment request has been submitted!');
@@ -357,7 +380,6 @@ class AppointmentController extends Controller
 
         $appointment = Appointment::findOrFail($id);
 
-        // Prevent overlapping schedule
         $conflict = Appointment::where('id', '!=', $id)
             ->whereIn('visit_status', ['pending', 'confirmed'])
             ->where('next_appointment', $validated['next_appointment'])
@@ -371,7 +393,7 @@ class AppointmentController extends Controller
 
         $appointment->date_of_visit = $validated['date_of_visit'];
         $appointment->next_appointment = $validated['next_appointment'] ?? $validated['date_of_visit'];
-        $appointment->visit_status = 'rescheduled'; // mark it explicitly
+        $appointment->visit_status = 'rescheduled';
         $appointment->save();
 
         return response()->json(['message' => 'Appointment rescheduled successfully']);
@@ -412,7 +434,6 @@ class AppointmentController extends Controller
 
         $validated['balance'] = ($validated['debit'] ?? 0) - ($validated['credit'] ?? 0);
 
-        // Prevent overlapping schedule when editing
         $conflict = Appointment::where('id', '!=', $id)
             ->whereIn('visit_status', ['pending', 'confirmed'])
             ->where('next_appointment', $validated['next_appointment'])
@@ -436,7 +457,6 @@ class AppointmentController extends Controller
             'note' => $validated['note'] ?? null,
         ]);
 
-        // Sync services with pivot notes
         $appointment->services()->sync(
             collect($validated['services'])->mapWithKeys(fn($srv) => [
                 $srv['id'] => ['note' => $srv['note'] ?? null],

@@ -10,6 +10,7 @@ use App\Http\Controllers\PatientVisitHistoryController;
 use App\Http\Controllers\AppointmentController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\BillingController;
 use App\Models\Service;
 
 Route::get('/', function () {
@@ -32,6 +33,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    //Billing
+    Route::get('/billing', [BillingController::class, 'index'])->name('billing.index');
+    Route::post('/billing/{bill}/pay', [BillingController::class, 'recordPayment'])->name('billing.pay');
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -56,6 +61,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Appointments main table
     Route::resource('appointments', AppointmentController::class);
+
     
     // Upcoming & Missed Appointments
     Route::get('/Appointments/Upcoming', [AppointmentController::class, 'upcoming'])->name('appointments.upcoming');
