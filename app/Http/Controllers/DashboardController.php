@@ -31,14 +31,21 @@ class DashboardController extends Controller
 
         /* ─── Stat cards ─────────────────────────────────────────── */
 
+        // An appointment may have no follow-up ("Next appointment" left empty),
+        // in which case its Date of visit is the scheduled date.
+        $appointmentAt = 'COALESCE(next_appointment, date_of_visit)';
+
         $todayBase = fn () => DB::table('appointments')
-            ->whereBetween('next_appointment', $this->range($dayStart, $dayEnd))
+            ->whereRaw("{$appointmentAt} BETWEEN ? AND ?", [
+                $this->db($dayStart)->toDateTimeString(),
+                $this->db($dayEnd)->toDateTimeString(),
+            ])
             ->where('visit_status', '!=', 'cancelled');
 
         $todayTotal     = $todayBase()->count();
         $remainingToday = $todayBase()
             ->whereIn('visit_status', ['pending', 'confirmed'])
-            ->where('next_appointment', '>', $this->db($now))
+            ->whereRaw("{$appointmentAt} > ?", [$this->db($now)->toDateTimeString()])
             ->count();
 
         $activePatients = Patient::count();
@@ -61,7 +68,10 @@ class DashboardController extends Controller
         $activityFor = function (Carbon $from, Carbon $to): array {
             $rows = DB::table('appointments')
                 ->selectRaw('LOWER(visit_status) as status, COUNT(*) as total')
-                ->whereBetween('next_appointment', $this->range($from, $to))
+                ->whereRaw('COALESCE(next_appointment, date_of_visit) BETWEEN ? AND ?', [
+                    $this->db($from)->toDateTimeString(),
+                    $this->db($to)->toDateTimeString(),
+                ])
                 ->groupBy(DB::raw('LOWER(visit_status)'))
                 ->pluck('total', 'status');
 
@@ -86,18 +96,24 @@ class DashboardController extends Controller
         /* ─── Today's schedule + calendar ─────────────────────────── */
 
         $todayAppointments = Appointment::with(['patient:id,patient_name', 'services:id,name'])
-            ->whereBetween('next_appointment', $this->range($dayStart, $dayEnd))
+            ->whereRaw('COALESCE(next_appointment, date_of_visit) BETWEEN ? AND ?', [
+                $this->db($dayStart)->toDateTimeString(),
+                $this->db($dayEnd)->toDateTimeString(),
+            ])
             ->where('visit_status', '!=', 'cancelled')
-            ->orderBy('next_appointment')
+            ->orderByRaw('COALESCE(next_appointment, date_of_visit)')
             ->get()
             ->map(fn (Appointment $a) => $this->mapAppointment($a))
             ->values();
 
-        // Calendar: every non-cancelled appointment (so pills match the Appointments list)
+        // Calendar: every non-cancelled appointment (so pills match the Appointments list).
+        // Rows without a follow-up use their date of visit (see mapAppointment()).
         $calendarAppointments = Appointment::with(['patient:id,patient_name', 'services:id,name'])
-            ->whereNotNull('next_appointment')
+            ->where(fn ($query) => $query
+                ->whereNotNull('next_appointment')
+                ->orWhereNotNull('date_of_visit'))
             ->where('visit_status', '!=', 'cancelled')
-            ->orderBy('next_appointment')
+            ->orderByRaw('COALESCE(next_appointment, date_of_visit)')
             ->get()
             ->map(fn (Appointment $a) => $this->mapAppointment($a))
             ->values();

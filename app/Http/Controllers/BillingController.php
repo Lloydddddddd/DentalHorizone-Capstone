@@ -25,8 +25,15 @@ class BillingController extends Controller
             $items = DB::table('bill_items')
                 ->join('services', 'bill_items.service_id', '=', 'services.id')
                 ->where('bill_items.bill_id', $bill->id)
-                ->select('services.name', 'bill_items.quantity as qty', 'bill_items.unit_price')
-                ->get();
+                ->select('services.name', 'bill_items.quantity as qty', 'bill_items.unit_price', 'bill_items.teeth')
+                ->get()
+                ->map(function ($item) {
+                    $item->teeth = $item->teeth
+                        ? (json_decode($item->teeth, true) ?: [])
+                        : [];
+
+                    return $item;
+                });
 
             // Get the payment history
             $payments = DB::table('payments')

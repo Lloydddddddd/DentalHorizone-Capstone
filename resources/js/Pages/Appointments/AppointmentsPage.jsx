@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Head, router, usePage } from "@inertiajs/react";
 import { Plus, Search } from "lucide-react";
 import ClinicLayout from "@/Layouts/ClinicLayout";
@@ -31,7 +31,16 @@ export default function AppointmentsPage({
     const [showNew, setShowNew] = useState(false);
     const [detailsAppt, setDetailsAppt] = useState(null);
 
+    const isFirstSearchEffect = useRef(true);
+
     useEffect(() => {
+        // Don't fire a filter navigation on mount: it would cancel a
+        // pagination visit (e.g. clicking "Next") started right away.
+        if (isFirstSearchEffect.current) {
+            isFirstSearchEffect.current = false;
+            return;
+        }
+
         const t = setTimeout(() => {
             const params = {};
             if (search) params.search = search;
@@ -152,6 +161,7 @@ export default function AppointmentsPage({
                             {appointments.links.map((link, i) => (
                                 <button
                                     key={i}
+                                    type="button"
                                     onClick={() =>
                                         link.url && router.visit(link.url)
                                     }

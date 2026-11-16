@@ -52,7 +52,7 @@ class Appointment extends Model
     public function services()
     {
         return $this->belongsToMany(Service::class, 'appointment_service')
-                ->withPivot('note')
+                ->withPivot('note', 'teeth')
                 ->withTimestamps();
     }
 }
