@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { CalendarDays, ChevronLeft, ChevronRight, Home, Settings, Users, X, CreditCard } from 'lucide-react';
+import { CalendarDays, ChevronLeft, ChevronRight, Home, Settings, Users, X, CreditCard, Clock } from 'lucide-react';
 
 function ToothIcon(props) {
     return (
@@ -40,6 +40,12 @@ const NAV = [
         href: '/billing',
         icon: CreditCard,
         isActive: (url) => url.startsWith('/billing'),
+    },
+    {
+        label: 'Daily Slots',
+        href: '/slots',
+        icon: Clock,
+        isActive: (url) => url.startsWith('/slots'),
     },
 ];
 
