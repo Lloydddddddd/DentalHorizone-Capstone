@@ -21,6 +21,16 @@ function formatMonthYear(year, month) {
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+const pad2 = (n) => String(n).padStart(2, '0');
+
+/** Local (not UTC) YYYY-MM-DD key, so early-morning bookings stay on their day. */
+function localDateKey(value) {
+    const date = new Date(value);
+    if (isNaN(date)) return null;
+
+    return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}`;
+}
+
 /**
  * Statuses we consider "active" for the calendar view.
  * `completed` and `cancelled` are intentionally excluded so the calendar
@@ -63,7 +73,7 @@ function dayBadgeColor(dayAppts) {
 
 export default function CalendarModal({ appointments, onClose, initialFilter = null }) {
     const today    = new Date();
-    const todayStr = today.toISOString().slice(0, 10);
+    const todayStr = localDateKey(today);
 
     const [viewYear,   setViewYear]   = useState(today.getFullYear());
     const [viewMonth,  setViewMonth]  = useState(today.getMonth());
@@ -120,9 +130,8 @@ export default function CalendarModal({ appointments, onClose, initialFilter = n
     const apptsByDate = {};
     visibleAppointments.forEach((appt) => {
         const raw = appt.next_appointment_raw || appt.next_appointment;
-        const parsed = new Date(raw);
-        if (!isNaN(parsed)) {
-            const key = parsed.toISOString().slice(0, 10);
+        const key = raw ? localDateKey(raw) : null;
+        if (key) {
             if (!apptsByDate[key]) apptsByDate[key] = [];
             apptsByDate[key].push(appt);
         }

@@ -4,6 +4,7 @@ import { Plus, Trash2, X } from "lucide-react";
 import Modal from "@/Components/Modal";
 import TextInput from "@/Components/TextInput";
 import InputError from "@/Components/InputError";
+import ToothExtractionPicker from "@/Components/ToothExtractionPicker";
 import { CalendarIcon } from "@/Pages/Appointments/AppointmentsTable";
 
 const STATUS_OPTIONS = [
@@ -14,7 +15,7 @@ const STATUS_OPTIONS = [
     { value: "cancelled", label: "Cancelled" },
 ];
 
-const EMPTY_SERVICE = { id: "", note: "" };
+const EMPTY_SERVICE = { id: "", note: "", teeth: [] };
 
 export default function NewAppointmentModal({
     show,
@@ -25,7 +26,9 @@ export default function NewAppointmentModal({
 }) {
     const [patientId, setPatientId] = useState("");
     const [complaint, setComplaint] = useState("");
-    const [servicesList, setServicesList] = useState([EMPTY_SERVICE]);
+    const [servicesList, setServicesList] = useState([
+        { ...EMPTY_SERVICE, teeth: [] },
+    ]);
     const [dateOfVisit, setDateOfVisit] = useState("");
     const [nextAppointment, setNextAppointment] = useState("");
     const [noNextAppointment, setNoNextAppointment] = useState(false);
@@ -41,7 +44,7 @@ export default function NewAppointmentModal({
         if (show) {
             setPatientId("");
             setComplaint("");
-            setServicesList([EMPTY_SERVICE]);
+            setServicesList([{ ...EMPTY_SERVICE, teeth: [] }]);
             setDateOfVisit("");
             setNextAppointment("");
             setNoNextAppointment(false);
@@ -78,8 +81,26 @@ export default function NewAppointmentModal({
 
     const updateService = (index, key, value) =>
         setServicesList((prev) =>
-            prev.map((s, i) => (i === index ? { ...s, [key]: value } : s))
+            prev.map((s, i) =>
+                i === index
+                    ? {
+                          ...s,
+                          [key]: value,
+                          // Changing the service invalidates previously picked teeth
+                          ...(key === "id" ? { teeth: [] } : {}),
+                      }
+                    : s
+            )
         );
+
+    /* Tooth extraction services get the universal-numbering tooth picker */
+    const isExtractionService = (serviceId) => {
+        const service = services.find(
+            (s) => String(s.id) === String(serviceId)
+        );
+
+        return !!service && /extraction/i.test(service.name || "");
+    };
 
     const submit = (e) => {
         e.preventDefault();
@@ -97,7 +118,11 @@ export default function NewAppointmentModal({
             note,
             services: servicesList
                 .filter((s) => s.id)
-                .map((s) => ({ id: s.id, note: s.note })),
+                .map((s) => ({
+                    id: s.id,
+                    note: s.note,
+                    teeth: isExtractionService(s.id) ? s.teeth || [] : [],
+                })),
         };
 
         setProcessing(true);
@@ -246,6 +271,20 @@ export default function NewAppointmentModal({
                         <Plus className="h-4 w-4" />
                         Add another service
                     </button>
+
+                    {/* Tooth picker for every selected extraction service */}
+                    {servicesList.map((srv, index) =>
+                        isExtractionService(srv.id) ? (
+                            <ToothExtractionPicker
+                                key={`teeth-${index}`}
+                                selected={srv.teeth || []}
+                                onChange={(teeth) =>
+                                    updateService(index, "teeth", teeth)
+                                }
+                                disabled={processing}
+                            />
+                        ) : null
+                    )}
                 </div>
 
                 {/* Date + next appointment */}

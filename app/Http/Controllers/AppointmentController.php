@@ -15,15 +15,15 @@ class AppointmentController extends Controller
     {
         $query = Appointment::with(['patient', 'services']);
         $now = Carbon::now();
+        // Rows without a follow-up use their date of visit as the schedule date.
+        $appointmentAt = 'COALESCE(next_appointment, date_of_visit)';
 
         $tab = $request->input('tab');
         if ($tab === 'upcoming') {
-            $query->whereNotNull('next_appointment')
-                  ->where('next_appointment', '>', $now)
+            $query->whereRaw("{$appointmentAt} > ?", [$now->toDateTimeString()])
                   ->where('visit_status', '!=', 'cancelled');
         } elseif ($tab === 'missed') {
-            $query->whereNotNull('next_appointment')
-                  ->where('next_appointment', '<', $now)
+            $query->whereRaw("{$appointmentAt} < ?", [$now->toDateTimeString()])
                   ->where('visit_status', '!=', 'cancelled');
         }
 
@@ -38,7 +38,7 @@ class AppointmentController extends Controller
             $query->where('visit_status', $request->input('status'));
         }
 
-        $query->orderBy('next_appointment', 'desc');
+        $query->orderByRaw("{$appointmentAt} desc");
 
         $appointments = $query->paginate(10)->withQueryString();
         $appointments->through(fn (Appointment $a) => $this->mapAppointment($a));
@@ -55,12 +55,10 @@ class AppointmentController extends Controller
     public function upcoming(Request $request)
     {
         $now = Carbon::now();
+        $appointmentAt = 'COALESCE(next_appointment, date_of_visit)';
 
         $query = Appointment::with(['patient', 'services'])
-            ->whereNotNull('next_appointment')
-            ->where(function ($q) use ($now) {
-                $q->where('next_appointment', '>', $now);
-            })
+            ->whereRaw("{$appointmentAt} > ?", [$now->toDateTimeString()])
             ->where('visit_status', '!=', 'cancelled');
 
         if ($request->filled('search')) {
@@ -74,7 +72,7 @@ class AppointmentController extends Controller
             $query->where('visit_status', $request->input('status'));
         }
 
-        $appointments = $query->orderBy('next_appointment', 'asc')
+        $appointments = $query->orderByRaw("{$appointmentAt} asc")
             ->paginate(10)
             ->withQueryString();
         $appointments->through(fn (Appointment $a) => $this->mapAppointment($a));
@@ -91,12 +89,10 @@ class AppointmentController extends Controller
     public function missed(Request $request)
     {
         $now = Carbon::now();
+        $appointmentAt = 'COALESCE(next_appointment, date_of_visit)';
 
         $query = Appointment::with(['patient', 'services'])
-            ->whereNotNull('next_appointment')
-            ->where(function ($q) use ($now) {
-                $q->where('next_appointment', '<', $now);
-            })
+            ->whereRaw("{$appointmentAt} < ?", [$now->toDateTimeString()])
             ->where('visit_status', '!=', 'cancelled');
 
         if ($request->filled('search')) {
@@ -110,7 +106,7 @@ class AppointmentController extends Controller
             $query->where('visit_status', $request->input('status'));
         }
 
-        $appointments = $query->orderBy('next_appointment', 'desc')
+        $appointments = $query->orderByRaw("{$appointmentAt} desc")
             ->paginate(10)
             ->withQueryString();
         $appointments->through(fn (Appointment $a) => $this->mapAppointment($a));
@@ -163,16 +159,25 @@ class AppointmentController extends Controller
         $dayEnd   = $now->copy()->endOfDay();
         $weekEnd  = $now->copy()->addDays(7)->endOfDay();
 
-        $today = Appointment::whereBetween('next_appointment', [$dayStart, $dayEnd])
+        $today = Appointment::whereRaw('COALESCE(next_appointment, date_of_visit) BETWEEN ? AND ?', [
+                $dayStart->toDateTimeString(),
+                $dayEnd->toDateTimeString(),
+            ])
             ->where('visit_status', '!=', 'cancelled')
             ->count();
 
-        $remainingToday = Appointment::whereBetween('next_appointment', [$dayStart, $dayEnd])
+        $remainingToday = Appointment::whereRaw('COALESCE(next_appointment, date_of_visit) BETWEEN ? AND ?', [
+                $dayStart->toDateTimeString(),
+                $dayEnd->toDateTimeString(),
+            ])
             ->whereIn('visit_status', ['pending', 'confirmed'])
-            ->where('next_appointment', '>', $now)
+            ->whereRaw('COALESCE(next_appointment, date_of_visit) > ?', [$now->toDateTimeString()])
             ->count();
 
-        $upcoming = Appointment::whereBetween('next_appointment', [$now, $weekEnd])
+        $upcoming = Appointment::whereRaw('COALESCE(next_appointment, date_of_visit) BETWEEN ? AND ?', [
+                $now->toDateTimeString(),
+                $weekEnd->toDateTimeString(),
+            ])
             ->where('visit_status', '!=', 'cancelled')
             ->count();
 
@@ -212,6 +217,8 @@ class AppointmentController extends Controller
             'services' => 'required|array|min:1',
             'services.*.id' => 'required|exists:services,id',
             'services.*.note' => 'nullable|string|max:500',
+            'services.*.teeth' => 'nullable|array',
+            'services.*.teeth.*' => 'integer|between:1,32',
         ]);
 
         if ($request->boolean('no_next_appointment')) {
@@ -245,8 +252,11 @@ class AppointmentController extends Controller
         ]);
 
         foreach ($validated['services'] as $srv) {
+            $teeth = $this->normalizeTeeth($srv['teeth'] ?? []);
+
             $appointment->services()->attach($srv['id'], [
                 'note' => $srv['note'] ?? null,
+                'teeth' => $teeth ? json_encode($teeth) : null,
             ]);
         }
 
@@ -274,6 +284,7 @@ class AppointmentController extends Controller
                     'quantity' => 1,
                     'unit_price' => $service->price,
                     'subtotal' => $service->price,
+                    'teeth' => $service->pivot->teeth ?? null,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -362,6 +373,7 @@ class AppointmentController extends Controller
                     'quantity' => 1,
                     'unit_price' => $service->price,
                     'subtotal' => $service->price,
+                    'teeth' => $service->pivot->teeth ?? null,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -424,6 +436,8 @@ class AppointmentController extends Controller
             'services' => 'required|array|min:1',
             'services.*.id' => 'required|exists:services,id',
             'services.*.note' => 'nullable|string|max:500',
+            'services.*.teeth' => 'nullable|array',
+            'services.*.teeth.*' => 'integer|between:1,32',
         ]);
 
         if ($request->boolean('no_next_appointment')) {
@@ -458,12 +472,34 @@ class AppointmentController extends Controller
         ]);
 
         $appointment->services()->sync(
-            collect($validated['services'])->mapWithKeys(fn($srv) => [
-                $srv['id'] => ['note' => $srv['note'] ?? null],
-            ])
+            collect($validated['services'])->mapWithKeys(function ($srv) {
+                $teeth = $this->normalizeTeeth($srv['teeth'] ?? []);
+
+                return [
+                    $srv['id'] => [
+                        'note' => $srv['note'] ?? null,
+                        'teeth' => $teeth ? json_encode($teeth) : null,
+                    ],
+                ];
+            })
         );
 
         return redirect()->route('appointments.index')->with('success', 'Appointment updated successfully.');
+    }
+
+    /**
+     * Keep only valid Universal Numbering System tooth numbers (1-32),
+     * de-duplicated and sorted.
+     */
+    protected function normalizeTeeth(array $teeth = []): array
+    {
+        return collect($teeth)
+            ->map(fn ($tooth) => (int) $tooth)
+            ->filter(fn ($tooth) => $tooth >= 1 && $tooth <= 32)
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
     }
 
     public function cancel($id)

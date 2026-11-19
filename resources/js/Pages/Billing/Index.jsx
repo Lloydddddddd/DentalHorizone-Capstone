@@ -216,7 +216,7 @@ export default function BillingIndex({ bills = [] }) {
                 </div>
             </div>
 
-            {/* ── VIEW BILL MODAL (closeable={false}) ─────────────────── */}
+            {/* VIEW BILL MODAL */}
             <Modal 
                 show={showViewModal} 
                 onClose={() => setShowViewModal(false)} 
@@ -281,17 +281,45 @@ export default function BillingIndex({ bills = [] }) {
                             <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-4">Payment Breakdown</p>
                             
                             <div className="space-y-4 text-[14px]">
-                                {selectedBill.items?.map((item, idx) => (
-                                    <div key={idx} className="flex justify-between text-slate-600">
-                                        <span className="flex items-center gap-2">
-                                            {item.qty > 1 ? `${item.qty}x ` : ""}
-                                            {item.name}
-                                        </span>
-                                        <span className="font-semibold text-clinic-ink">
-                                            ₱{Number(item.qty * item.unit_price).toLocaleString(undefined, {minimumFractionDigits: 2})}
-                                        </span>
-                                    </div>
-                                ))}
+                                {selectedBill.items?.map((item, idx) => {
+                                    const teeth = Array.isArray(item.teeth)
+                                        ? [...item.teeth]
+                                              .map(Number)
+                                              .sort((a, b) => a - b)
+                                        : [];
+
+                                    return (
+                                        <div
+                                            key={idx}
+                                            className="flex justify-between gap-4 text-slate-600"
+                                        >
+                                            <div className="min-w-0">
+                                                <span className="flex items-center gap-2">
+                                                    {item.qty > 1 ? `${item.qty}x ` : ""}
+                                                    {item.name}
+                                                </span>
+                                                {teeth.length > 0 && (
+                                                    <div className="mt-1 flex flex-wrap items-center gap-1">
+                                                        <span className="text-[12px] text-slate-400">
+                                                            Teeth extracted:
+                                                        </span>
+                                                        {teeth.map((tooth) => (
+                                                            <span
+                                                                key={tooth}
+                                                                className="rounded-md bg-[#eaf0fb] px-1.5 py-0.5 text-[11px] font-semibold text-clinic-blue"
+                                                            >
+                                                                {tooth}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <span className="shrink-0 font-semibold text-clinic-ink">
+                                                ₱{Number(item.qty * item.unit_price).toLocaleString(undefined, {minimumFractionDigits: 2})}
+                                            </span>
+                                        </div>
+                                    );
+                                })}
 
                                 <div className="border-t border-dashed border-slate-200 my-2 pt-2"></div>
                                 
@@ -344,7 +372,6 @@ export default function BillingIndex({ bills = [] }) {
                 )}
             </Modal>
 
-            {/* ── RECORD PAYMENT MODAL (closeable={false}) ───────────────── */}
             <Modal 
                 show={showPaymentModal} 
                 onClose={() => setShowPaymentModal(false)} 
