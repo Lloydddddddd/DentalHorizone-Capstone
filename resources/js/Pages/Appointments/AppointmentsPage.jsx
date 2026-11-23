@@ -6,6 +6,7 @@ import AppointmentsTable, {
     AppointmentDetailsModal,
 } from "@/Pages/Appointments/AppointmentsTable";
 import NewAppointmentModal from "@/Components/NewAppointmentModal";
+import AddAppointmentPopup from "@/Components/AddAppointmentPopup";
 
 const FILTERS = [
     { key: "all", label: "All" },
@@ -30,6 +31,7 @@ export default function AppointmentsPage({
     // Modal state
     const [showNew, setShowNew] = useState(false);
     const [detailsAppt, setDetailsAppt] = useState(null);
+    const [editingAppt, setEditingAppt] = useState(null);
 
     const isFirstSearchEffect = useRef(true);
 
@@ -154,6 +156,7 @@ export default function AppointmentsPage({
                     <AppointmentsTable
                         appointments={appointments?.data ?? []}
                         onViewDetails={(appt) => setDetailsAppt(appt)}
+                        onEdit={(appt) => setEditingAppt(appt)}
                     />
 
                     {appointments?.links?.length > 3 && (
@@ -192,6 +195,18 @@ export default function AppointmentsPage({
                     router.reload();
                 }}
             />
+
+            {editingAppt && (
+                <AddAppointmentPopup
+                    mode="edit"
+                    appointment={editingAppt}
+                    onClose={() => setEditingAppt(null)}
+                    onSaved={() => {
+                        setEditingAppt(null);
+                        router.reload({ only: ["appointments", "appointmentStats"] });
+                    }}
+                />
+            )}
 
             {/* Details modal */}
             <AppointmentDetailsModal

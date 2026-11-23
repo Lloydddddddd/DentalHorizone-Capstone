@@ -12,6 +12,7 @@ use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\BillingController;
 use App\Models\Service;
+use App\Http\Controllers\DentistAvailabilityController;
 
 Route::get('/', function () {
     return Inertia::render('Landing', [
@@ -23,6 +24,8 @@ Route::get('/', function () {
 Route::post('/appointments/public-store', [AppointmentController::class, 'publicStore'])->name('appointments.publicStore');
 
 Route::get('/login', fn () => Inertia::render('Auth/Login'))->name('login');
+// Public availability check (used by Landing page)
+Route::get('/slots/check', [DentistAvailabilityController::class, 'checkAvailability'])->name('slots.check');
 
 /*
 |--------------------------------------------------------------------------
@@ -74,6 +77,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/payments', fn () => Inertia::render('Payments/Index'))->name('payments.index');
     Route::get('/reports', fn () => Inertia::render('Reports/Index'))->name('reports.index');
     Route::get('/settings', fn () => Inertia::render('Settings/Index'))->name('settings.index');
+
+    // Daily Slots Management (Admin)
+    Route::get('/slots', [DentistAvailabilityController::class, 'index'])->name('slots.index');
+    Route::post('/slots', [DentistAvailabilityController::class, 'store'])->name('slots.store');
+    Route::put('/slots/{slot}', [DentistAvailabilityController::class, 'update'])->name('slots.update');
+    Route::delete('/slots/{slot}', [DentistAvailabilityController::class, 'destroy'])->name('slots.destroy');
 });
 
 require __DIR__.'/auth.php';

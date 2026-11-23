@@ -229,13 +229,25 @@ class AppointmentController extends Controller
 
         $validated['balance'] = ($validated['debit'] ?? 0) - ($validated['credit'] ?? 0);
 
-        $conflict = Appointment::whereIn('visit_status', ['pending', 'confirmed'])
-            ->where('next_appointment', $validated['next_appointment'])
-            ->exists();
+        // Only check exact time conflict when a next_appointment is actually provided
+        if (!empty($validated['next_appointment'])) {
+            $conflict = Appointment::whereIn('visit_status', ['pending', 'confirmed'])
+                ->where('next_appointment', $validated['next_appointment'])
+                ->exists();
 
-        if ($conflict) {
+            if ($conflict) {
+                return redirect()->back()->withErrors([
+                    'next_appointment' => 'This time slot is already taken. Please choose another.',
+                ])->withInput();
+            }
+        }
+
+        // Daily capacity check (uses next_appointment if set, otherwise date_of_visit)
+        $dateToCheck = $validated['next_appointment'] ?? $validated['date_of_visit'] ?? null;
+
+        if ($dateToCheck && !$this->hasAvailableSlotOnDate($dateToCheck)) {
             return redirect()->back()->withErrors([
-                'next_appointment' => 'This time slot is already taken. Please choose another.',
+                'date_of_visit' => 'This day has no remaining slots.',
             ])->withInput();
         }
 
@@ -310,6 +322,7 @@ class AppointmentController extends Controller
             'note'           => 'nullable|string|max:500',
         ]);
 
+        // 1. Exact time conflict (keep your existing logic)
         $conflict = Appointment::where('next_appointment', $validated['next_appointment'])
             ->whereIn('visit_status', ['pending', 'confirmed'])
             ->exists();
@@ -317,6 +330,13 @@ class AppointmentController extends Controller
         if ($conflict) {
             return redirect()->back()->withErrors([
                 'next_appointment' => 'This time slot is already taken. Please choose another.',
+            ])->withInput();
+        }
+
+        // 2. Daily capacity check (NEW)
+        if (!$this->hasAvailableSlotOnDate($validated['next_appointment'])) {
+            return redirect()->back()->withErrors([
+                'next_appointment' => 'Sorry, this day is fully booked or not available. Please choose another date.',
             ])->withInput();
         }
 
@@ -514,4 +534,25 @@ class AppointmentController extends Controller
     public function create() {}
     public function show(string $id) {}
     public function destroy(string $id) {}
+
+    /**
+     * Check if a given date still has available slots.
+     */
+    protected function hasAvailableSlotOnDate(string $dateTime): bool
+    {
+        $date = \Carbon\Carbon::parse($dateTime)->toDateString();
+
+        $slot = \App\Models\DentistAvailability::whereDate('available_date', $date)->first();
+
+        // If no slot was set by admin for this day → not available
+        if (!$slot) {
+            return false;
+        }
+
+        if ($slot->is_closed) {
+            return false;
+        }
+
+        return $slot->remainingSlots() > 0;
+    }
 }

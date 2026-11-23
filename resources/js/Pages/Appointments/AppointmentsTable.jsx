@@ -3,11 +3,45 @@ import { MoreHorizontal, X } from "lucide-react";
 import Modal from "@/Components/Modal";
 import StatusPill from "@/Components/StatusPill";
 import dayjs from "dayjs";
+import AppointmentsTableViewButtonModal from "@/Pages/Appointments/Components/AppointmentsTableViewModal";
+import AppointmentsTableRescheduleButton from "@/Pages/Appointments/Components/AppointmentsTableRescheduleModal";
+
+/* ── Cancel button ─────────────────────────────────────────────── */
+function CancelButton({ appointment }) {
+    const handleCancel = async () => {
+        if (!confirm(`Cancel appointment for ${appointment.patient_name}?`)) {
+            return;
+        }
+
+        try {
+            await axios.put(`/appointments/${appointment.id}/cancel`);
+            router.reload({ only: ["appointments", "appointmentStats"] });
+        } catch (error) {
+            console.error(error);
+            alert("Failed to cancel appointment.");
+        }
+    };
+
+    const status = (appointment.visit_status || "").toLowerCase();
+    if (status === "cancelled" || status === "canceled" || status === "completed") {
+        return null;
+    }
+
+    return (
+        <button
+            type="button"
+            onClick={handleCancel}
+            className="text-red-600 hover:text-red-700 font-medium text-sm tracking-wide transition hover:underline hover:underline-offset-4"
+        >
+            Cancel
+        </button>
+    );
+}
 
 /* ─────────────────────────────────────────────────────────────────── */
 /* Main table                                                          */
 /* ─────────────────────────────────────────────────────────────────── */
-export default function AppointmentsTable({ appointments, onViewDetails }) {
+export default function AppointmentsTable({ appointments, onViewDetails, onEdit }) {
     const rows = Array.isArray(appointments)
         ? appointments
         : (appointments?.data ?? []);
@@ -88,14 +122,21 @@ export default function AppointmentsTable({ appointments, onViewDetails }) {
                                 </td>
 
                                 <td className="px-7 py-5 text-center">
-                                    <button
-                                        type="button"
-                                        onClick={() => handleRowClick(appt)}
-                                        className="rounded-lg p-2 text-slate-400 transition hover:bg-slate-100 hover:text-clinic-ink"
-                                        aria-label="View details"
-                                    >
-                                        <MoreHorizontal className="h-5 w-5" />
-                                    </button>
+                                    <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1">
+                                        <AppointmentsTableViewButtonModal appointment={appt} />
+
+                                        <AppointmentsTableRescheduleButton appointment={appt} />
+
+                                        <CancelButton appointment={appt} />
+
+                                        <button
+                                            type="button"
+                                            onClick={() => onEdit?.(appt)}
+                                            className="text-emerald-600 hover:text-emerald-700 font-medium text-sm tracking-wide transition hover:underline hover:underline-offset-4"
+                                        >
+                                            Edit
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}

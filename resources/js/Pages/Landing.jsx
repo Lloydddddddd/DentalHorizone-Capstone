@@ -12,6 +12,10 @@ export default function Landing() {
     const [submittedData, setSubmittedData] = useState(null);
     const receiptRef = useRef(null);
 
+    // Slot availability state
+    const [slotInfo, setSlotInfo] = useState(null);
+    const [checkingSlot, setCheckingSlot] = useState(false);
+
     const { data, setData, post, processing, reset, errors } = useForm({
         patient_name: "",
         age: "",
@@ -24,6 +28,27 @@ export default function Landing() {
         complaint: "",
         note: "",
     });
+
+    // Check remaining slots for the selected date
+    const checkSlotAvailability = async (dateTimeValue) => {
+        if (!dateTimeValue) {
+            setSlotInfo(null);
+            return;
+        }
+
+        const dateOnly = dateTimeValue.split("T")[0];
+
+        setCheckingSlot(true);
+        try {
+            const res = await fetch(`/slots/check?date=${dateOnly}`);
+            const json = await res.json();
+            setSlotInfo(json);
+        } catch (err) {
+            setSlotInfo(null);
+        } finally {
+            setCheckingSlot(false);
+        }
+    };
 
     const submit = (e) => {
         e.preventDefault();
@@ -39,6 +64,7 @@ export default function Landing() {
                 });
                 setShowReceipt(true);
                 reset();
+                setSlotInfo(null);
                 window.scrollTo({ top: 0, behavior: "smooth" });
             },
         });
@@ -80,6 +106,11 @@ export default function Landing() {
         const d = new Date(dateString);
         return d.toLocaleTimeString("en-US", { hour: 'numeric', minute: '2-digit' });
     };
+
+    // Disable submit when day is full / closed / not set
+    const isDayUnavailable =
+        slotInfo &&
+        (!slotInfo.exists || slotInfo.is_closed || slotInfo.remaining === 0);
 
     return (
         <div className="flex min-h-screen flex-col bg-white font-sans text-slate-900 selection:bg-orange-500/30">
@@ -315,6 +346,9 @@ export default function Landing() {
                                             placeholder="Your full name"
                                             required
                                         />
+                                        {errors.patient_name && (
+                                            <p className="mt-1 text-[13px] text-red-600">{errors.patient_name}</p>
+                                        )}
                                     </div>
                                     <div>
                                         <label className="mb-2 block text-[13px] font-semibold text-slate-700">Age</label>
@@ -327,6 +361,9 @@ export default function Landing() {
                                             min="1"
                                             required
                                         />
+                                        {errors.age && (
+                                            <p className="mt-1 text-[13px] text-red-600">{errors.age}</p>
+                                        )}
                                     </div>
                                 </div>
 
@@ -342,6 +379,9 @@ export default function Landing() {
                                             placeholder="+63 900 000 0000"
                                             required
                                         />
+                                        {errors.telephone && (
+                                            <p className="mt-1 text-[13px] text-red-600">{errors.telephone}</p>
+                                        )}
                                     </div>
                                     <div>
                                         <label className="mb-2 block text-[13px] font-semibold text-slate-700">Email address</label>
@@ -353,6 +393,9 @@ export default function Landing() {
                                             placeholder="you@example.com"
                                             required
                                         />
+                                        {errors.email && (
+                                            <p className="mt-1 text-[13px] text-red-600">{errors.email}</p>
+                                        )}
                                     </div>
                                 </div>
 
@@ -387,11 +430,41 @@ export default function Landing() {
                                         <input
                                             type="datetime-local"
                                             value={data.next_appointment}
-                                            onChange={(e) => setData("next_appointment", e.target.value)}
+                                            onChange={(e) => {
+                                                setData("next_appointment", e.target.value);
+                                                checkSlotAvailability(e.target.value);
+                                            }}
                                             className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-[15px] focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500/20"
                                             required
                                         />
                                         <p className="mt-1.5 text-[11px] text-slate-400">Choose an available date, hour, and minute.</p>
+
+                                        {/* Availability feedback */}
+                                        {checkingSlot && (
+                                            <p className="mt-1.5 text-[12px] text-slate-400">Checking availability...</p>
+                                        )}
+
+                                        {!checkingSlot && slotInfo && (
+                                            <div className="mt-2">
+                                                {!slotInfo.exists || slotInfo.is_closed ? (
+                                                    <p className="text-[13px] font-medium text-red-600">
+                                                        This day is not available for booking.
+                                                    </p>
+                                                ) : slotInfo.remaining === 0 ? (
+                                                    <p className="text-[13px] font-medium text-red-600">
+                                                        Fully booked for this day.
+                                                    </p>
+                                                ) : (
+                                                    <p className="text-[13px] font-medium text-emerald-600">
+                                                        {slotInfo.remaining} slot{slotInfo.remaining !== 1 ? "s" : ""} remaining out of {slotInfo.max_slots}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {errors.next_appointment && (
+                                            <p className="mt-1 text-[13px] text-red-600">{errors.next_appointment}</p>
+                                        )}
                                     </div>
                                     <div>
                                         <label className="mb-2 block text-[13px] font-semibold text-slate-700">Service</label>
@@ -406,6 +479,9 @@ export default function Landing() {
                                                 <option key={s.id} value={s.id}>{s.name}</option>
                                             ))}
                                         </select>
+                                        {errors.services && (
+                                            <p className="mt-1 text-[13px] text-red-600">{errors.services}</p>
+                                        )}
                                     </div>
                                 </div>
 
@@ -425,7 +501,7 @@ export default function Landing() {
                                     <p className="text-[12px] text-slate-500">By submitting, you agree to be contacted by our clinic team.</p>
                                     <button
                                         type="submit"
-                                        disabled={processing}
+                                        disabled={processing || isDayUnavailable}
                                         className="w-full md:w-auto flex items-center justify-center gap-2 rounded-lg bg-orange-500 px-8 py-3.5 text-[15px] font-bold text-white transition hover:bg-orange-600 disabled:opacity-70 shadow-lg shadow-orange-500/30"
                                     >
                                         {processing ? "Requesting..." : "Request appointment"} <ArrowRight className="h-4 w-4" />
