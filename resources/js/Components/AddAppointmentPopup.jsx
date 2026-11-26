@@ -313,15 +313,8 @@ export default function AddAppointmentPopup({ patient = null, appointment = null
                             <InputLabel>Visit Status</InputLabel>
                             <select value={data.visit_status} onChange={e => setData('visit_status', e.target.value)} className="mt-1 rounded-md border-gray-300 w-full">
                                 <option value="pending">Pending</option>
-                                <option value="completed">Completed</option>
                                 <option value="cancelled">Cancelled</option>
                             </select>
-
-                            {data.visit_status === "completed" && parseFloat(data.balance) > 0 && (
-                                <p className="text-xs text-red-500 mt-2">
-                                    Note: This appointment is marked as completed but still has an outstanding balance of {data.balance}.
-                                </p>
-                            )}
                             <InputError message={localErrors.visit_status || errors.visit_status} />
                         </div>
 

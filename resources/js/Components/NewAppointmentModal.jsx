@@ -1,17 +1,17 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { router } from "@inertiajs/react";
-import { Plus, Trash2, X } from "lucide-react";
+import { CreditCard, Plus, Trash2, X } from "lucide-react";
 import Modal from "@/Components/Modal";
 import TextInput from "@/Components/TextInput";
 import InputError from "@/Components/InputError";
 import ToothExtractionPicker from "@/Components/ToothExtractionPicker";
+import SearchableSelect from "@/Components/SearchableSelect";
 import { CalendarIcon } from "@/Pages/Appointments/AppointmentsTable";
 
 const STATUS_OPTIONS = [
     { value: "pending", label: "Pending" },
     { value: "confirmed", label: "Confirmed" },
     { value: "rescheduled", label: "Rescheduled" },
-    { value: "completed", label: "Completed" },
     { value: "cancelled", label: "Cancelled" },
 ];
 
@@ -175,22 +175,36 @@ export default function NewAppointmentModal({
                 onSubmit={submit}
                 className="max-h-[70vh] overflow-y-auto px-8 py-7"
             >
+                {/* Appointment details */}
+                <div className="mb-5 flex items-center gap-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#fdf1e1] text-clinic-accent">
+                        <CalendarIcon className="h-4 w-4" />
+                    </span>
+                    <div>
+                        <h3 className="text-[15px] font-semibold text-clinic-ink">
+                            Appointment details
+                        </h3>
+                        <p className="text-[12px] text-slate-500">
+                            Patient, services, and schedule.
+                        </p>
+                    </div>
+                </div>
+
                 {/* Patient */}
                 <div>
                     <label className={labelClass}>Patient</label>
-                    <select
+                    <SearchableSelect
+                        options={patients.map((p) => ({
+                            value: p.id,
+                            label: p.patient_name,
+                        }))}
                         value={patientId}
-                        onChange={(e) => setPatientId(e.target.value)}
+                        onChange={(value) => setPatientId(value)}
+                        placeholder="Select a patient"
+                        searchPlaceholder="Search patient name..."
+                        emptyMessage="No patients found"
                         disabled={processing}
-                        className="w-full rounded-xl border border-clinic-line bg-white px-4 py-3 text-[15px] text-clinic-ink focus:border-clinic-blue focus:outline-none focus:ring-2 focus:ring-clinic-blue/15"
-                    >
-                        <option value="">Select a patient</option>
-                        {patients.map((p) => (
-                            <option key={p.id} value={p.id}>
-                                {p.patient_name}
-                            </option>
-                        ))}
-                    </select>
+                    />
                     <InputError
                         message={errors.patient_id}
                         className="mt-1.5 text-[12px]"
@@ -285,6 +299,11 @@ export default function NewAppointmentModal({
                             />
                         ) : null
                     )}
+
+                    <InputError
+                        message={errors.services}
+                        className="mt-1.5 text-[12px]"
+                    />
                 </div>
 
                 {/* Date + next appointment */}
@@ -347,6 +366,22 @@ export default function NewAppointmentModal({
                     </select>
                 </div>
 
+                {/* Billing details */}
+                <div className="mt-7 border-t border-clinic-line pt-6">
+                    <div className="mb-5 flex items-center gap-3">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#e6f6f2] text-[#157a64]">
+                            <CreditCard className="h-4 w-4" />
+                        </span>
+                        <div>
+                            <h3 className="text-[15px] font-semibold text-clinic-ink">
+                                Billing details
+                            </h3>
+                            <p className="text-[12px] text-slate-500">
+                                Charges, payment, and notes.
+                            </p>
+                        </div>
+                    </div>
+
                 {/* Debit / Credit */}
                 <div className="mt-5 grid grid-cols-2 gap-5">
                     <div>
@@ -395,6 +430,7 @@ export default function NewAppointmentModal({
                         disabled={processing}
                         className="w-full rounded-xl border border-clinic-line bg-white px-4 py-3 text-[15px] text-clinic-ink placeholder:text-slate-400 focus:border-clinic-blue focus:outline-none focus:ring-2 focus:ring-clinic-blue/15 disabled:bg-slate-50"
                     />
+                </div>
                 </div>
             </form>
 
