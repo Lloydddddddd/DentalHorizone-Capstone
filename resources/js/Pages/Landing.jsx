@@ -1,6 +1,6 @@
 import React, { useState, useRef } from "react";
 import { Link, usePage, useForm } from "@inertiajs/react";
-import { ArrowRight, Check, X, Menu } from "lucide-react";
+import { ArrowRight, Check, X, Menu, MapPin, Phone } from "lucide-react";
 import html2canvas from "html2canvas";
 
 export default function Landing() {
@@ -488,22 +488,40 @@ export default function Landing() {
 
             {/* ── FOOTER ─────────────────────────────────────────────── */}
             <footer className="bg-[#082b46] py-10 sm:py-12 mt-auto border-t border-white/10">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 flex flex-col md:flex-row justify-between items-center gap-5 sm:gap-6">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 flex flex-col md:flex-row justify-between items-center gap-6 sm:gap-8">
+                    {/* Brand */}
                     <div className="w-full md:w-1/3 flex justify-center md:justify-start">
-                        <div className="flex flex-col justify-center leading-none text-left">
+                        <div className="flex flex-col justify-center leading-none text-center md:text-left">
                             <span className="text-[9px] font-bold uppercase tracking-[0.2em] text-slate-400 mb-1">
                                 Dental
                             </span>
                             <span className="text-[20px] sm:text-[22px] font-semibold tracking-tight text-white">
                                 Horiz<span className="text-orange-500">o</span>ne
                             </span>
+                            <p className="mt-2 text-[13px] sm:text-[14px] text-slate-400">
+                                Modern dentistry. Genuine care.
+                            </p>
                         </div>
                     </div>
-                    <div className="w-full md:w-1/3 flex justify-center">
-                        <p className="text-[13px] sm:text-[14px] text-slate-400">Modern dentistry. Genuine care.</p>
+
+                    {/* Address & Contact */}
+                    <div className="w-full md:w-1/3 flex flex-col items-center gap-2 text-center">
+                        <div className="flex items-start gap-2 text-[13px] sm:text-[14px] text-slate-300">
+                            <MapPin className="h-4 w-4 mt-0.5 shrink-0 text-orange-400" />
+                            <span>Magsaysay St., Brgy Miputak, Dipolog City</span>
+                        </div>
+                        <a
+                            href="tel:09551761691"
+                            className="flex items-center gap-2 text-[13px] sm:text-[14px] font-medium text-slate-300 hover:text-orange-400 transition-colors"
+                        >
+                            <Phone className="h-4 w-4 shrink-0 text-orange-400" />
+                            <span>0955 176 1691</span>
+                        </a>
                     </div>
+
+                    {/* Hours */}
                     <div className="w-full md:w-1/3 flex justify-center md:justify-end">
-                        <p className="text-[13px] sm:text-[14px] font-medium text-slate-400">
+                        <p className="text-[13px] sm:text-[14px] font-medium text-slate-400 text-center md:text-right">
                             Mon–Sat · 8:00 AM–6:00 PM
                         </p>
                     </div>
