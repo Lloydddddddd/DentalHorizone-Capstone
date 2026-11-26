@@ -12,7 +12,6 @@ export default function StatusFilter({ value, onChange }) {
       >
         <option value="" className="text-gray-600">All Statuses</option>
         <option value="pending" className="text-yellow-600 font-medium">Pending</option>
-        <option value="completed" className="text-green-600 font-medium">Completed</option>
         <option value="cancelled" className="text-red-600 font-medium">Cancelled</option>
       </select>
 
